@@ -5,6 +5,8 @@ A tiny client-side Fabric mod for **Minecraft 26.2** ("Chaos Cubed").
 It adds a compact info panel to the HUD, on-screen waypoint markers, saved waypoints,
 a waypoint manager, and a settings screen — all without touching the server.
 
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Features
 
 ### HUD

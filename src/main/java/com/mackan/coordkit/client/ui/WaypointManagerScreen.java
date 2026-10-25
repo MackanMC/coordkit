@@ -188,13 +188,13 @@ public final class WaypointManagerScreen extends Screen {
 		this.bulkShowButton = addRenderableWidget(Button.builder(
 				Component.literal("Show"),
 				button -> bulkVisible(true)
-		).bounds(secondaryX, secondaryY, secondaryWidth, 20).build());
+		).bounds(secondaryX + secondaryWidth + GAP, secondaryY, secondaryWidth, 20).build());
 		this.bulkShowButton.setTooltip(Tooltip.create(Component.literal("Show all selected waypoints")));
 
 		this.bulkHideButton = addRenderableWidget(Button.builder(
 				Component.literal("Hide"),
 				button -> bulkVisible(false)
-		).bounds(secondaryX + secondaryWidth + GAP, secondaryY, secondaryWidth, 20).build());
+		).bounds(secondaryX + (secondaryWidth + GAP) * 2, secondaryY, secondaryWidth, 20).build());
 		this.bulkHideButton.setTooltip(Tooltip.create(Component.literal("Hide all selected waypoints")));
 
 		this.bulkClearButton = addRenderableWidget(Button.builder(

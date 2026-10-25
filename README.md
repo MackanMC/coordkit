@@ -35,6 +35,9 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **Add here** saves your current position (name, X/Y/Z, dimension, colour).
 - **Add aim** saves the block you are looking at, up to 128 blocks away.
 - Click a waypoint name to edit it; **TP** copies `/tp @s <x> <y> <z>`.
+- **Share** copies the waypoint as a single-line `CK1` share code.
+- **Group** waypoints with a free-text label (up to 24 characters); **Suggest**
+  cycles through groups that already exist.
 - Toggle a waypoint on/off with its **ON / OFF** button.
 - **Del** asks for confirmation on the second click.
 - Coordinates and names are editable; colours come from an 8-colour palette.
@@ -45,12 +48,38 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - A death waypoint is created automatically when you die. The latest death in
   each world and dimension is updated in place; the setting can be turned off.
 
+### Sharing and organising
+- **Export…** offers three sets: **All waypoints**, **Visible here** (including
+  global waypoints) and **Visible only** (visible in any world).
+- Export as JSON to a timestamped file in `config/coordkit/exports/` and the
+  clipboard, or as one `CK1` share code per line. **Open folder** shows the
+  export location.
+- Share codes over 240 characters are still copied but flagged as too long for
+  one Minecraft chat message.
+- **Import…** reads the clipboard or the latest export, previews valid,
+  duplicate and invalid entries, and only then adds them.
+- Imports are additive: duplicates are skipped, existing waypoints are never
+  overwritten, and imported death waypoints become normal waypoints. JSON
+  imports are all-or-nothing.
+- The import scope policy can keep the original world, move waypoints to the
+  current world, or make them global.
+- Search matches names and groups. Scope, group and sort cycle buttons cover all
+  worlds/this world, all/ungrouped/specific groups, and name/group/distance
+  order.
+- Select rows (or **Select all** matching the filters across pages) and use
+  **Show**, **Hide** or **Delete**. Bulk delete confirms with the count on the
+  second click.
+- **Groups…** lists every group with its waypoint count. Rename updates all
+  members; delete only clears the label and keeps the waypoints.
+
+
 ### Screens
 - **F8** opens the settings screen, which has two tabs:
   - **HUD**: panel on/off, FPS, clock, chunk line, facing, biome, time, light,
     speed, durability, waypoint list, markers and edge arrows.
   - **Waypoints**: max waypoints on the HUD, marker range, waypoint list / marker
     toggles, and a shortcut to the manager.
+- The waypoint manager also opens the export, import and group screens.
 - With [Mod Menu](https://modrinth.com/mod/modmenu) installed, the same screen is
   available from CoordKit's entry in the mod list.
 - Settings are written to `config/coordkit.json` immediately.
@@ -74,6 +103,7 @@ All five keybinds can be changed in *Options → Controls → Key Binds*
 
 ```json
 {
+  "configVersion": 2,
   "showHud": true,
   "showFps": true,
   "showClock": true,
@@ -101,20 +131,26 @@ All five keybinds can be changed in *Options → Controls → Key Binds*
       "color": 4632774,
       "visible": true,
       "world": "sp:my-world",
-      "autoDeath": false
+      "autoDeath": false,
+      "group": "Home"
     }
   ]
 }
 ```
 
+A pre-1.4.0 file has no `configVersion` or `group`; it is upgraded on load and
+saved with `configVersion: 2`. Older CoordKit versions can still read a 1.4.0
+config, but they ignore the new fields and drop `group` if they save it.
+
 Deleting the file resets everything to defaults.
 
 ## Roadmap
 
-- **1.4.0 — Sharing & organising** ([spec](docs/1.4.0-spec.md)): export/import,
-  chat-friendly share codes, groups, search/filter/sort and bulk actions.
 - **1.5.0 — HUD & marker customisation**: HUD layout, scale, marker styles and
   display options.
+
+1.4.0 shipped sharing and organising: export/import, `CK1` share codes, groups,
+search/filter/sort and bulk actions ([spec](docs/1.4.0-spec.md)).
 
 ## Requirements
 
@@ -136,7 +172,7 @@ $env:JAVA_HOME = 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot'
 .\gradlew.bat build
 ```
 
-The mod jar ends up in `build/libs/coordkit-1.3.0.jar`.
+The mod jar ends up in `build/libs/coordkit-1.4.0.jar`.
 
 ## Run in a dev client
 
@@ -160,16 +196,29 @@ src/main/java/com/mackan/coordkit/
     ├── Waypoint.java                  waypoint data model
     ├── WaypointActions.java           shared create, quick-add and death logic
     ├── WaypointScope.java             world/server identity and visibility
+    ├── WaypointQuery.java             search, filters, sorting and export sets
+    ├── WaypointGroups.java            group listing, rename and clear rules
+    ├── WaypointSharing.java           JSON/share-code codec + import planning
+    ├── WaypointExports.java           export folder, file names and latest export
     ├── ClientFeedback.java            action-bar and chat helpers
     ├── WaypointStyle.java             colour palette
     ├── integration/
     │   └── ModMenuIntegration.java    optional Mod Menu config-screen hook
     └── ui/
         ├── CoordKitConfigScreen.java  tabbed settings screen
-        ├── WaypointManagerScreen.java scrollable waypoint list
-        └── WaypointEditScreen.java    add/edit a waypoint
+        ├── WaypointManagerScreen.java scrollable waypoint list + bulk actions
+        ├── WaypointEditScreen.java    add/edit a waypoint
+        ├── WaypointExportScreen.java  export set/format and file output
+        ├── WaypointImportScreen.java  clipboard/export preview and import
+        ├── WaypointGroupsScreen.java  group list with rename/delete
+        └── GroupRenameScreen.java     rename one group
 src/test/java/com/mackan/coordkit/client/
-└── WaypointScopeTest.java             world-scope matching + config migration
+├── CoordKitConfigTest.java            config defaults + 1.4.0 migration
+├── WaypointScopeTest.java             world-scope matching and visibility
+├── WaypointSharingTest.java           JSON/share-code round-trips + validation
+├── WaypointQueryTest.java             search, filters, sorting, export sets
+├── WaypointExportsTest.java           export folder and file naming
+└── WaypointGroupsTest.java            group listing, rename and clear
 src/main/resources/
 ├── fabric.mod.json
 └── assets/coordkit/                   icon + en_us translations
@@ -182,6 +231,12 @@ src/main/resources/
 - Waypoints from configs created before 1.3.0 have no world scope and therefore
   remain visible in every world until you edit them. Open the waypoint and click
   its **World: All** button once to scope it to the current world.
+- Exports are written to `config/coordkit/exports/`; **Import latest export**
+  reads the newest file there. Share codes carry no group label, so import JSON
+  when groups must survive.
+- 1.3.0 clients can read a 1.4.0 config, but they ignore `configVersion` and
+  `group`, and a 1.3.0 save drops the group labels. Update everyone before
+  sharing a grouped list.
 - 26.2 is unobfuscated; Loom therefore needs no mappings configuration.
 - 26.2 renamed most GUI APIs: screens render through
   `GuiGraphicsExtractor.extractRenderState(...)`, input arrives as `KeyEvent` /

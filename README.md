@@ -109,6 +109,13 @@ All five keybinds can be changed in *Options → Controls → Key Binds*
 
 Deleting the file resets everything to defaults.
 
+## Roadmap
+
+- **1.4.0 — Sharing & organising** ([spec](docs/1.4.0-spec.md)): export/import,
+  chat-friendly share codes, groups, search/filter/sort and bulk actions.
+- **1.5.0 — HUD & marker customisation**: HUD layout, scale, marker styles and
+  display options.
+
 ## Requirements
 
 | Component | Version |

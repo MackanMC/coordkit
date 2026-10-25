@@ -129,7 +129,7 @@ $env:JAVA_HOME = 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot'
 .\gradlew.bat build
 ```
 
-The mod jar ends up in `build/libs/coordkit-1.2.0.jar`.
+The mod jar ends up in `build/libs/coordkit-1.3.0.jar`.
 
 ## Run in a dev client
 

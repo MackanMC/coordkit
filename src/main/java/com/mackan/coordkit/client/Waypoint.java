@@ -12,6 +12,9 @@ import java.util.Locale;
  * {@link Identifier} for the same reason.</p>
  */
 public final class Waypoint {
+	public static final int MAX_NAME_LENGTH = 32;
+	public static final int MAX_GROUP_LENGTH = 24;
+
 	public String name = "Waypoint";
 	public double x;
 	public double y;
@@ -30,6 +33,11 @@ public final class Waypoint {
 	 * True for the waypoint managed automatically after death.
 	 */
 	public boolean autoDeath = false;
+
+	/**
+	 * Flat, user-defined group label. Empty means ungrouped.
+	 */
+	public String group = "";
 
 	public Waypoint() {
 	}
@@ -57,6 +65,33 @@ public final class Waypoint {
 
 	public String command() {
 		return String.format(Locale.ROOT, "/tp @s %.2f %.2f %.2f", x, y, z);
+	}
+
+	/**
+	 * Applies the name rules used when a waypoint is created or imported:
+	 * trim, fall back to "Waypoint", and cap the length.
+	 */
+	public static String normalizeName(String name) {
+		String trimmed = name == null ? "" : name.trim();
+
+		if (trimmed.isEmpty()) {
+			return "Waypoint";
+		}
+
+		return trimmed.length() <= MAX_NAME_LENGTH ? trimmed : trimmed.substring(0, MAX_NAME_LENGTH);
+	}
+
+	/**
+	 * Applies the flat-group rules: trim, preserve case, and cap the length.
+	 * An empty result means ungrouped.
+	 */
+	public static String normalizeGroup(String group) {
+		if (group == null) {
+			return "";
+		}
+
+		String trimmed = group.trim();
+		return trimmed.length() <= MAX_GROUP_LENGTH ? trimmed : trimmed.substring(0, MAX_GROUP_LENGTH);
 	}
 
 	public String coordsText() {

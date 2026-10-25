@@ -3,6 +3,8 @@ package com.mackan.coordkit.client;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -46,6 +48,17 @@ class WaypointScopeTest {
 		assertTrue(WaypointScope.isVisibleIn((String) null, "sp:my-world"));
 		assertEquals("", WaypointScope.normalizeWorld(null));
 		assertEquals("sp:my-world", WaypointScope.normalizeWorld("sp:my-world"));
+	}
+
+	@Test
+	void singleplayerKeyUsesTheSaveFolderName() {
+		// LevelResource.ROOT resolves "." against the save folder, so the raw
+		// path ends in "Test\\." and must be normalised first.
+		assertEquals("sp:test", WaypointScope.singleplayerKey(Path.of("saves", "Test", ".")));
+		assertEquals("sp:test", WaypointScope.singleplayerKey(Path.of("saves", "Test")));
+		assertEquals("sp:my-world", WaypointScope.singleplayerKey(Path.of("saves", "My-World", ".")));
+		assertEquals("", WaypointScope.singleplayerKey(null));
+		assertEquals("", WaypointScope.singleplayerKey(Path.of(".")));
 	}
 
 	@Test

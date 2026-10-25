@@ -26,6 +26,7 @@ public final class CoordKitClient implements ClientModInitializer {
 	private static final KeyMapping ADD_WAYPOINT = register("key.coordkit.add_waypoint", InputConstants.KEY_F10);
 
 	private static boolean wasDead;
+	private static String lastWorldKey = "";
 
 	private static KeyMapping register(String translationKey, int keyCode) {
 		return KeyMappingHelper.registerKeyMapping(new KeyMapping(
@@ -87,6 +88,23 @@ public final class CoordKitClient implements ClientModInitializer {
 		}
 
 		handleDeath(client);
+		logWorldScope(client);
+	}
+
+	/**
+	 * Logs the active world key once per join. This makes scope problems
+	 * diagnosable from the game log without adding HUD clutter.
+	 */
+	private static void logWorldScope(Minecraft client) {
+		String key = WaypointScope.currentWorldKey(client);
+
+		if (!key.equals(lastWorldKey)) {
+			lastWorldKey = key;
+
+			if (!key.isEmpty()) {
+				CoordKit.LOGGER.info("CoordKit world scope: {}", key);
+			}
+		}
 	}
 
 	private static void handleDeath(Minecraft client) {

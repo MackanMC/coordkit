@@ -48,16 +48,7 @@ public final class WaypointScope {
 			if (integrated != null) {
 				// getServerDirectory() is the instance folder (for example
 				// ".minecraft"), so use the level root to get the actual save.
-				Path directory = integrated.getWorldPath(LevelResource.ROOT);
-
-				if (directory != null) {
-					Path name = directory.getFileName();
-					String id = name != null ? name.toString() : directory.toString();
-
-					if (!id.isBlank()) {
-						return scopeKey("sp", id);
-					}
-				}
+				return singleplayerKey(integrated.getWorldPath(LevelResource.ROOT));
 			}
 		}
 
@@ -70,6 +61,26 @@ public final class WaypointScope {
 		}
 
 		return normalizeKey(prefix + ":" + value);
+	}
+
+	/**
+	 * Builds the singleplayer key from the level root path. The root is the
+	 * save folder with {@code "."} appended, so it has to be normalised before
+	 * taking the file name. Kept package-private for tests.
+	 */
+	static String singleplayerKey(Path levelRoot) {
+		if (levelRoot == null) {
+			return "";
+		}
+
+		Path normalized = levelRoot.normalize();
+		Path name = normalized.getFileName();
+
+		if (name == null) {
+			return "";
+		}
+
+		return scopeKey("sp", name.toString());
 	}
 
 	/**

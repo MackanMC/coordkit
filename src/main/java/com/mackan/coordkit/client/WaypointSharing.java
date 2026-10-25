@@ -116,6 +116,13 @@ public final class WaypointSharing {
 		}
 
 		/**
+		 * True when a single invalid entry blocks the whole import.
+		 */
+		public boolean allOrNothing() {
+			return allOrNothing;
+		}
+
+		/**
 		 * True when the caller may add something. JSON imports are
 		 * all-or-nothing, so any invalid entry blocks them.
 		 */

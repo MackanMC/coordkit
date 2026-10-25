@@ -1,5 +1,6 @@
 package com.mackan.coordkit.client;
 
+import com.mackan.coordkit.client.WaypointQuery.ExportSet;
 import com.mackan.coordkit.client.WaypointQuery.GroupFilter;
 import com.mackan.coordkit.client.WaypointQuery.Position;
 import com.mackan.coordkit.client.WaypointQuery.Scope;
@@ -132,6 +133,27 @@ class WaypointQueryTest {
 
 		assertEquals(List.of("Base Camp", "Trading Hall"), names(result));
 		assertEquals(result.size(), result.stream().distinct().count());
+	}
+
+	@Test
+	void exportSetsSelectAllVisibleHereOrEnabledOnly() {
+		Waypoint global = waypoint("Global", "", "", 0.0, 0.0);
+		Waypoint local = waypoint("Local", "", "sp:test", 0.0, 0.0);
+		Waypoint localHidden = waypoint("Hidden", "", "sp:test", 0.0, 0.0);
+		Waypoint other = waypoint("Other", "", "sp:other", 0.0, 0.0);
+		Waypoint otherHidden = waypoint("Other Hidden", "", "sp:other", 0.0, 0.0);
+		localHidden.visible = false;
+		otherHidden.visible = false;
+		List<Waypoint> all = List.of(global, local, localHidden, other, otherHidden);
+
+		assertEquals(5, WaypointQuery.exportSet(all, ExportSet.ALL, "sp:test").size());
+		assertEquals(List.of("Global", "Local", "Hidden"),
+				names(WaypointQuery.exportSet(all, ExportSet.VISIBLE_HERE, "sp:test")));
+		assertEquals(List.of("Global"),
+				names(WaypointQuery.exportSet(all, ExportSet.VISIBLE_HERE, "")));
+		assertEquals(List.of("Global", "Local", "Other"),
+				names(WaypointQuery.exportSet(all, ExportSet.VISIBLE_ONLY, "sp:test")));
+		assertTrue(WaypointQuery.exportSet(null, ExportSet.ALL, "sp:test").isEmpty());
 	}
 
 	@Test

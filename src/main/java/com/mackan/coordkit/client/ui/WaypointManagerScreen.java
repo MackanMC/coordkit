@@ -6,6 +6,7 @@ import com.mackan.coordkit.client.Waypoint;
 import com.mackan.coordkit.client.WaypointActions;
 import com.mackan.coordkit.client.WaypointQuery;
 import com.mackan.coordkit.client.WaypointScope;
+import com.mackan.coordkit.client.WaypointSharing;
 import com.mackan.coordkit.client.WaypointStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -138,6 +139,21 @@ public final class WaypointManagerScreen extends Screen {
 		int totalWidth = buttonWidth * 4 + GAP * 3;
 		int buttonX = (this.width - totalWidth) / 2;
 
+		int secondaryWidth = Math.min(100, (available - GAP) / 2);
+		int secondaryTotal = secondaryWidth * 2 + GAP;
+		int secondaryX = (this.width - secondaryTotal) / 2;
+		int secondaryY = bottom - 24;
+
+		addRenderableWidget(Button.builder(
+				Component.literal("Export..."),
+				button -> this.minecraft.gui.setScreen(new WaypointExportScreen(this))
+		).bounds(secondaryX, secondaryY, secondaryWidth, 20).build());
+
+		addRenderableWidget(Button.builder(
+				Component.literal("Import..."),
+				button -> this.minecraft.gui.setScreen(new WaypointImportScreen(this))
+		).bounds(secondaryX + secondaryWidth + GAP, secondaryY, secondaryWidth, 20).build());
+
 		Button add = Button.builder(
 				Component.literal("Add here"),
 				button -> addHere()
@@ -179,10 +195,11 @@ public final class WaypointManagerScreen extends Screen {
 
 		int rowWidth = Math.min(360, this.width - 20);
 		int left = (this.width - rowWidth) / 2;
-		int toggleWidth = 34;
-		int copyWidth = 46;
+		int toggleWidth = 30;
+		int copyWidth = 34;
+		int shareWidth = 44;
 		int deleteWidth = 36;
-		int nameWidth = rowWidth - toggleWidth - copyWidth - deleteWidth - GAP * 3;
+		int nameWidth = rowWidth - toggleWidth - copyWidth - shareWidth - deleteWidth - GAP * 4;
 		int first = this.page * rowsPerPage;
 		int last = Math.min(this.filtered.size(), first + rowsPerPage);
 
@@ -220,6 +237,14 @@ public final class WaypointManagerScreen extends Screen {
 			this.rowWidgets.add(copy);
 
 			x += copyWidth + GAP;
+			Button share = addRenderableWidget(Button.builder(
+					Component.literal("Share"),
+					button -> shareWaypoint(waypoint)
+			).bounds(x, y, shareWidth, 20).build());
+			share.setTooltip(Tooltip.create(Component.literal("Copy a CK1 share code")));
+			this.rowWidgets.add(share);
+
+			x += shareWidth + GAP;
 			Button delete = addRenderableWidget(Button.builder(
 					Component.literal(this.pendingDelete == waypoint ? "Sure?" : "Del"),
 					button -> deleteOrArm(waypoint)
@@ -366,7 +391,7 @@ public final class WaypointManagerScreen extends Screen {
 	private Component groupLabel() {
 		return switch (this.groupFilter) {
 			case ALL -> Component.literal("Group: All");
-			case UNGROUPED -> Component.literal("Group: None");
+			case UNGROUPED -> Component.literal("Group: Ungrouped");
 			case SPECIFIC -> Component.literal("Group: " + truncate(this.groupFilterValue, 10));
 		};
 	}
@@ -423,7 +448,7 @@ public final class WaypointManagerScreen extends Screen {
 	}
 
 	private int rowsPerPage() {
-		return Math.max(1, (this.height - TOP - 46) / ROW_HEIGHT);
+		return Math.max(1, (this.height - TOP - 70) / ROW_HEIGHT);
 	}
 
 	private int pageCount() {
@@ -468,6 +493,30 @@ public final class WaypointManagerScreen extends Screen {
 		if (this.minecraft.player != null) {
 			this.minecraft.player.sendSystemMessage(Component.literal("Copied: " + waypoint.command()));
 		}
+	}
+
+	private void shareWaypoint(Waypoint waypoint) {
+		String code = WaypointSharing.shareCode(waypoint);
+
+		try {
+			this.minecraft.keyboardHandler.setClipboard(code);
+		} catch (RuntimeException e) {
+			ClientFeedback.chat(this.minecraft, "Could not copy the share code: " + errorText(e));
+			return;
+		}
+
+		ClientFeedback.actionBar(this.minecraft, "Share code copied");
+
+		if (code.length() > 240) {
+			ClientFeedback.chat(this.minecraft, "This share code is " + code.length()
+					+ " characters, too long to paste into Minecraft chat in one message."
+					+ " Paste it in Discord or a file instead.");
+		}
+	}
+
+	private static String errorText(Throwable error) {
+		String message = error.getMessage();
+		return message == null || message.isBlank() ? error.getClass().getSimpleName() : message;
 	}
 
 	private void deleteOrArm(Waypoint waypoint) {
@@ -551,7 +600,7 @@ public final class WaypointManagerScreen extends Screen {
 		if (pages > 1) {
 			graphics.centeredText(this.font,
 					Component.literal("Page " + (this.page + 1) + " / " + pages + "  ·  scroll to browse"),
-					this.width / 2, this.height - 42, 0xFFA0A0A0);
+					this.width / 2, this.height - 66, 0xFFA0A0A0);
 		}
 	}
 

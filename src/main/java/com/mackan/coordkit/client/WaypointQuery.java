@@ -39,6 +39,18 @@ public final class WaypointQuery {
 	}
 
 	/**
+	 * The waypoint sets offered by the export screen.
+	 */
+	public enum ExportSet {
+		/** Every waypoint, including hidden entries and other worlds. */
+		ALL,
+		/** Waypoints visible in the current world, including global ones. */
+		VISIBLE_HERE,
+		/** Waypoints with their own visibility toggle enabled. */
+		VISIBLE_ONLY
+	}
+
+	/**
 	 * The player position used for distance sorting. {@code null} means the
 	 * position is unknown, so distance sorting falls back to name order.
 	 */
@@ -93,6 +105,36 @@ public final class WaypointQuery {
 		}
 
 		result.sort(comparator(sort, position));
+		return result;
+	}
+
+	/**
+	 * Selects one of the export sets without modifying the source list.
+	 */
+	public static List<Waypoint> exportSet(List<Waypoint> waypoints, ExportSet set, String currentWorldKey) {
+		List<Waypoint> result = new ArrayList<>();
+		ExportSet mode = set == null ? ExportSet.ALL : set;
+
+		if (waypoints == null) {
+			return result;
+		}
+
+		for (Waypoint waypoint : waypoints) {
+			if (waypoint == null) {
+				continue;
+			}
+
+			boolean include = switch (mode) {
+				case ALL -> true;
+				case VISIBLE_HERE -> WaypointScope.isVisibleIn(waypoint, currentWorldKey);
+				case VISIBLE_ONLY -> waypoint.visible;
+			};
+
+			if (include) {
+				result.add(waypoint);
+			}
+		}
+
 		return result;
 	}
 

@@ -27,9 +27,18 @@ class WaypointScopeTest {
 	}
 
 	@Test
-	void unknownWorldKeepsWaypointsVisible() {
-		assertTrue(WaypointScope.isVisibleIn("sp:my-world", ""));
-		assertTrue(WaypointScope.isVisibleIn("sp:my-world", null));
+	void unknownWorldHidesScopedWaypoints() {
+		assertFalse(WaypointScope.isVisibleIn("sp:my-world", ""));
+		assertFalse(WaypointScope.isVisibleIn("sp:my-world", null));
+		assertTrue(WaypointScope.isVisibleIn("", ""));
+	}
+
+	@Test
+	void keysAreCaseInsensitiveAndIgnoreTheDefaultPort() {
+		assertTrue(WaypointScope.isVisibleIn("SP:My-World", "sp:my-world"));
+		assertTrue(WaypointScope.isVisibleIn("mp:play.example.com:25565", "mp:play.example.com"));
+		assertTrue(WaypointScope.isVisibleIn("mp:play.example.com", "MP:PLAY.EXAMPLE.COM:25565"));
+		assertFalse(WaypointScope.isVisibleIn("mp:play.example.com:25566", "mp:play.example.com:25565"));
 	}
 
 	@Test

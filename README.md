@@ -173,7 +173,8 @@ src/main/resources/
 - The mod is `"environment": "client"`, so it does nothing on a dedicated server
   even if the jar is placed in the server's `mods` folder.
 - Waypoints from configs created before 1.3.0 have no world scope and therefore
-  remain visible in every world until you edit them.
+  remain visible in every world until you edit them. Open the waypoint and click
+  its **World: All** button once to scope it to the current world.
 - 26.2 is unobfuscated; Loom therefore needs no mappings configuration.
 - 26.2 renamed most GUI APIs: screens render through
   `GuiGraphicsExtractor.extractRenderState(...)`, input arrives as `KeyEvent` /

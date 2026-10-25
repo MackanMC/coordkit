@@ -3,6 +3,7 @@ package com.mackan.coordkit.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.nio.file.Path;
 import java.util.Locale;
@@ -27,36 +28,48 @@ public final class WaypointScope {
 			return "";
 		}
 
-		if (client.hasSingleplayerServer()) {
-			IntegratedServer server = client.getSingleplayerServer();
+		// Prefer the multiplayer server data when it exists. In singleplayer it
+		// is null and the integrated server is used instead.
+		ServerData server = client.getCurrentServer();
 
-			if (server != null) {
-				Path directory = server.getServerDirectory();
+		if (server != null) {
+			if (server.ip != null && !server.ip.isBlank()) {
+				return scopeKey("mp", server.ip);
+			}
+
+			if (server.name != null && !server.name.isBlank()) {
+				return scopeKey("mp", server.name);
+			}
+		}
+
+		if (client.hasSingleplayerServer()) {
+			IntegratedServer integrated = client.getSingleplayerServer();
+
+			if (integrated != null) {
+				// getServerDirectory() is the instance folder (for example
+				// ".minecraft"), so use the level root to get the actual save.
+				Path directory = integrated.getWorldPath(LevelResource.ROOT);
 
 				if (directory != null) {
 					Path name = directory.getFileName();
 					String id = name != null ? name.toString() : directory.toString();
 
 					if (!id.isBlank()) {
-						return "sp:" + id.toLowerCase(Locale.ROOT);
+						return scopeKey("sp", id);
 					}
 				}
 			}
 		}
 
-		ServerData server = client.getCurrentServer();
+		return "";
+	}
 
-		if (server != null) {
-			if (server.ip != null && !server.ip.isBlank()) {
-				return "mp:" + server.ip.toLowerCase(Locale.ROOT);
-			}
-
-			if (server.name != null && !server.name.isBlank()) {
-				return "mp:" + server.name.toLowerCase(Locale.ROOT);
-			}
+	private static String scopeKey(String prefix, String value) {
+		if (value == null || value.isBlank()) {
+			return "";
 		}
 
-		return "";
+		return normalizeKey(prefix + ":" + value);
 	}
 
 	/**
@@ -76,10 +89,29 @@ public final class WaypointScope {
 	}
 
 	/**
-	 * Turns a missing world key (from a pre-1.3.0 config) into the global key.
+	 * Turns a missing or non-canonical world key (from a pre-1.3.0 config or a
+	 * hand edit) into the key format used for comparisons.
 	 */
 	public static String normalizeWorld(String world) {
-		return world == null ? "" : world;
+		return normalizeKey(world);
+	}
+
+	/**
+	 * Canonical form of a scope key: lower case, no surrounding whitespace and
+	 * no explicit default Minecraft port.
+	 */
+	static String normalizeKey(String key) {
+		if (key == null) {
+			return "";
+		}
+
+		String normalized = key.trim().toLowerCase(Locale.ROOT);
+
+		if (normalized.startsWith("mp:") && normalized.endsWith(":25565")) {
+			normalized = normalized.substring(0, normalized.length() - ":25565".length());
+		}
+
+		return normalized;
 	}
 
 	public static boolean isVisibleIn(Waypoint waypoint, String currentWorldKey) {
@@ -90,15 +122,20 @@ public final class WaypointScope {
 	 * Pure matching logic, kept separate so it can be tested without a client.
 	 */
 	public static boolean isVisibleIn(String waypointWorld, String currentWorldKey) {
-		if (waypointWorld == null || waypointWorld.isEmpty()) {
+		String waypointKey = normalizeKey(waypointWorld);
+
+		if (waypointKey.isEmpty()) {
 			return true;
 		}
 
-		// If the world cannot be identified, do not hide the waypoint.
-		if (currentWorldKey == null || currentWorldKey.isEmpty()) {
-			return true;
+		String currentKey = normalizeKey(currentWorldKey);
+
+		// Scoped waypoints cannot be matched without knowing the world, so
+		// keep them hidden instead of leaking them into every world.
+		if (currentKey.isEmpty()) {
+			return false;
 		}
 
-		return waypointWorld.equals(currentWorldKey);
+		return waypointKey.equals(currentKey);
 	}
 }

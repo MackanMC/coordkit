@@ -29,8 +29,11 @@ All notable changes to CoordKit are documented here. This project follows
 
 ### Fixed
 
-- Waypoints no longer leak between singleplayer worlds or multiplayer servers
-  when scoping is enabled.
+- Waypoints no longer leak between singleplayer worlds: the scope now uses the
+  save folder instead of the game/instance directory.
+- Scoped waypoints stay hidden when the current world cannot be identified,
+  instead of appearing in every world.
+- Server scope keys are case-insensitive and ignore an explicit `:25565` port.
 
 ## [1.2.0] - 2026-10-25
 

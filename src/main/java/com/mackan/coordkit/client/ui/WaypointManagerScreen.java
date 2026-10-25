@@ -4,6 +4,7 @@ import com.mackan.coordkit.client.ClientFeedback;
 import com.mackan.coordkit.client.CoordKitConfig;
 import com.mackan.coordkit.client.Waypoint;
 import com.mackan.coordkit.client.WaypointActions;
+import com.mackan.coordkit.client.WaypointGroups;
 import com.mackan.coordkit.client.WaypointQuery;
 import com.mackan.coordkit.client.WaypointScope;
 import com.mackan.coordkit.client.WaypointSharing;
@@ -18,10 +19,11 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 
 /**
  * Scrollable list of saved waypoints with search, filters, sorting and
@@ -34,14 +36,25 @@ public final class WaypointManagerScreen extends Screen {
 
 	private final Screen parent;
 	private final List<AbstractWidget> rowWidgets = new ArrayList<>();
+	private final Set<Waypoint> selected = Collections.newSetFromMap(new IdentityHashMap<>());
 	private List<Waypoint> filtered = List.of();
 	private int page;
 	private Waypoint pendingDelete;
+	private boolean bulkDeleteArmed;
 
 	private EditBox searchBox;
 	private Button scopeButton;
 	private Button groupButton;
 	private Button sortButton;
+
+	private Button exportButton;
+	private Button importButton;
+	private Button groupsButton;
+	private Button selectAllButton;
+	private Button bulkShowButton;
+	private Button bulkHideButton;
+	private Button bulkClearButton;
+	private Button bulkDeleteButton;
 
 	private String query = "";
 	private WaypointQuery.Scope scopeFilter = WaypointQuery.Scope.VISIBLE_HERE;
@@ -58,6 +71,8 @@ public final class WaypointManagerScreen extends Screen {
 	protected void init() {
 		super.init();
 		this.rowWidgets.clear();
+		this.selected.clear();
+		this.bulkDeleteArmed = false;
 		buildControls();
 		refresh();
 	}
@@ -98,6 +113,7 @@ public final class WaypointManagerScreen extends Screen {
 			}
 
 			this.query = next;
+			clearSelection();
 			resetPage();
 			rebuildRows();
 		});
@@ -139,20 +155,63 @@ public final class WaypointManagerScreen extends Screen {
 		int totalWidth = buttonWidth * 4 + GAP * 3;
 		int buttonX = (this.width - totalWidth) / 2;
 
-		int secondaryWidth = Math.min(100, (available - GAP) / 2);
-		int secondaryTotal = secondaryWidth * 2 + GAP;
+		int secondaryWidth = Math.min(100, (available - GAP * 3) / 4);
+		int secondaryTotal = secondaryWidth * 4 + GAP * 3;
 		int secondaryX = (this.width - secondaryTotal) / 2;
 		int secondaryY = bottom - 24;
 
-		addRenderableWidget(Button.builder(
+		this.exportButton = addRenderableWidget(Button.builder(
 				Component.literal("Export..."),
 				button -> this.minecraft.gui.setScreen(new WaypointExportScreen(this))
 		).bounds(secondaryX, secondaryY, secondaryWidth, 20).build());
+		this.exportButton.setTooltip(Tooltip.create(Component.literal("Write or copy your waypoints")));
 
-		addRenderableWidget(Button.builder(
+		this.importButton = addRenderableWidget(Button.builder(
 				Component.literal("Import..."),
 				button -> this.minecraft.gui.setScreen(new WaypointImportScreen(this))
 		).bounds(secondaryX + secondaryWidth + GAP, secondaryY, secondaryWidth, 20).build());
+		this.importButton.setTooltip(Tooltip.create(Component.literal("Add waypoints from the clipboard or an export")));
+
+		this.groupsButton = addRenderableWidget(Button.builder(
+				Component.literal("Groups..."),
+				button -> this.minecraft.gui.setScreen(new WaypointGroupsScreen(this))
+		).bounds(secondaryX + (secondaryWidth + GAP) * 2, secondaryY, secondaryWidth, 20).build());
+		this.groupsButton.setTooltip(Tooltip.create(Component.literal("Rename or delete waypoint groups")));
+
+		this.selectAllButton = addRenderableWidget(Button.builder(
+				Component.literal("Select all"),
+				button -> selectAllFiltered()
+		).bounds(secondaryX + (secondaryWidth + GAP) * 3, secondaryY, secondaryWidth, 20).build());
+		this.selectAllButton.setTooltip(Tooltip.create(Component.literal(
+				"Select every waypoint matching the search and filters, across pages")));
+
+		this.bulkShowButton = addRenderableWidget(Button.builder(
+				Component.literal("Show"),
+				button -> bulkVisible(true)
+		).bounds(secondaryX, secondaryY, secondaryWidth, 20).build());
+		this.bulkShowButton.setTooltip(Tooltip.create(Component.literal("Show all selected waypoints")));
+
+		this.bulkHideButton = addRenderableWidget(Button.builder(
+				Component.literal("Hide"),
+				button -> bulkVisible(false)
+		).bounds(secondaryX + secondaryWidth + GAP, secondaryY, secondaryWidth, 20).build());
+		this.bulkHideButton.setTooltip(Tooltip.create(Component.literal("Hide all selected waypoints")));
+
+		this.bulkClearButton = addRenderableWidget(Button.builder(
+				Component.literal("Clear"),
+				button -> {
+					clearSelection();
+					rebuildRows();
+				}
+		).bounds(secondaryX, secondaryY, secondaryWidth, 20).build());
+		this.bulkClearButton.setTooltip(Tooltip.create(Component.literal("Clear the selection")));
+
+		this.bulkDeleteButton = addRenderableWidget(Button.builder(
+				Component.literal("Delete"),
+				button -> bulkDelete()
+		).bounds(secondaryX + (secondaryWidth + GAP) * 3, secondaryY, secondaryWidth, 20).build());
+		this.bulkDeleteButton.setTooltip(Tooltip.create(Component.literal(
+				"Delete the selected waypoints. Click twice to confirm.")));
 
 		Button add = Button.builder(
 				Component.literal("Add here"),
@@ -195,11 +254,12 @@ public final class WaypointManagerScreen extends Screen {
 
 		int rowWidth = Math.min(360, this.width - 20);
 		int left = (this.width - rowWidth) / 2;
+		int selectWidth = 26;
 		int toggleWidth = 30;
 		int copyWidth = 34;
 		int shareWidth = 44;
 		int deleteWidth = 36;
-		int nameWidth = rowWidth - toggleWidth - copyWidth - shareWidth - deleteWidth - GAP * 4;
+		int nameWidth = rowWidth - selectWidth - toggleWidth - copyWidth - shareWidth - deleteWidth - GAP * 5;
 		int first = this.page * rowsPerPage;
 		int last = Math.min(this.filtered.size(), first + rowsPerPage);
 
@@ -207,7 +267,17 @@ public final class WaypointManagerScreen extends Screen {
 			Waypoint waypoint = this.filtered.get(i);
 			int y = TOP + (i - first) * ROW_HEIGHT;
 			int x = left;
+			boolean isSelected = this.selected.contains(waypoint);
 
+			Button select = addRenderableWidget(Button.builder(
+					Component.literal(isSelected ? "[x]" : "[ ]"),
+					button -> toggleSelected(waypoint)
+			).bounds(x, y, selectWidth, 20).build());
+			select.setTooltip(Tooltip.create(Component.literal(
+					isSelected ? "Remove from the selection" : "Select for bulk actions")));
+			this.rowWidgets.add(select);
+
+			x += selectWidth + GAP;
 			Button toggle = addRenderableWidget(Button.builder(
 					Component.literal(waypoint.visible ? "ON" : "OFF"),
 					button -> {
@@ -222,7 +292,7 @@ public final class WaypointManagerScreen extends Screen {
 
 			x += toggleWidth + GAP;
 			Button name = addRenderableWidget(Button.builder(
-					Component.literal(rowLabel(waypoint)),
+					Component.literal(clip(rowLabel(waypoint), nameWidth - 8)),
 					button -> this.minecraft.gui.setScreen(new WaypointEditScreen(this, waypoint, false))
 			).bounds(x, y, nameWidth, 20).build());
 			name.setTooltip(Tooltip.create(Component.literal(waypointTooltip(waypoint))));
@@ -252,6 +322,8 @@ public final class WaypointManagerScreen extends Screen {
 			delete.setTooltip(Tooltip.create(Component.literal("Click once to arm, click again to delete")));
 			this.rowWidgets.add(delete);
 		}
+
+		updateBulkBar();
 	}
 
 	/**
@@ -282,10 +354,99 @@ public final class WaypointManagerScreen extends Screen {
 	}
 
 	private void filterChanged() {
+		clearSelection();
 		resetPage();
 		ensureGroupFilterValid();
 		updateControlLabels();
 		rebuildRows();
+	}
+
+	private void clearSelection() {
+		this.selected.clear();
+		this.bulkDeleteArmed = false;
+	}
+
+	private void toggleSelected(Waypoint waypoint) {
+		if (!this.selected.remove(waypoint)) {
+			this.selected.add(waypoint);
+		}
+
+		this.bulkDeleteArmed = false;
+		rebuildRows();
+	}
+
+	private void selectAllFiltered() {
+		this.selected.addAll(this.filtered);
+		this.bulkDeleteArmed = false;
+		rebuildRows();
+		ClientFeedback.actionBar(this.minecraft,
+				"Selected " + this.selected.size() + (this.selected.size() == 1 ? " waypoint" : " waypoints"));
+	}
+
+	private void bulkVisible(boolean visible) {
+		if (this.selected.isEmpty()) {
+			return;
+		}
+
+		for (Waypoint waypoint : this.selected) {
+			waypoint.visible = visible;
+		}
+
+		this.bulkDeleteArmed = false;
+		CoordKitConfig.get().save();
+		ClientFeedback.actionBar(this.minecraft, this.selected.size()
+				+ (this.selected.size() == 1 ? " waypoint " : " waypoints ")
+				+ (visible ? "shown" : "hidden"));
+		refresh();
+	}
+
+	private void bulkDelete() {
+		if (this.selected.isEmpty()) {
+			return;
+		}
+
+		if (!this.bulkDeleteArmed) {
+			this.bulkDeleteArmed = true;
+			ClientFeedback.actionBar(this.minecraft,
+					"Press again to delete " + this.selected.size()
+							+ (this.selected.size() == 1 ? " waypoint" : " waypoints"));
+			rebuildRows();
+			return;
+		}
+
+		int count = this.selected.size();
+		CoordKitConfig config = CoordKitConfig.get();
+		config.waypoints.removeIf(this.selected::contains);
+		config.save();
+		this.selected.clear();
+		this.bulkDeleteArmed = false;
+		ClientFeedback.actionBar(this.minecraft,
+				"Deleted " + count + (count == 1 ? " waypoint" : " waypoints"));
+		refresh();
+	}
+
+	/**
+	 * Shows either the shared/manage actions or the bulk actions. The two sets
+	 * share the same row, so the screen keeps its height at small GUI scales.
+	 */
+	private void updateBulkBar() {
+		if (this.exportButton == null || this.bulkDeleteButton == null) {
+			return;
+		}
+
+		boolean hasSelection = !this.selected.isEmpty();
+		this.exportButton.visible = !hasSelection;
+		this.importButton.visible = !hasSelection;
+		this.groupsButton.visible = !hasSelection;
+		this.selectAllButton.visible = !hasSelection;
+		this.selectAllButton.active = !this.filtered.isEmpty();
+		this.bulkClearButton.visible = hasSelection;
+		this.bulkShowButton.visible = hasSelection;
+		this.bulkHideButton.visible = hasSelection;
+		this.bulkDeleteButton.visible = hasSelection;
+		this.bulkDeleteButton.setMessage(Component.literal(this.bulkDeleteArmed
+				? "Delete " + this.selected.size() + "?"
+				: "Delete"));
 	}
 
 	private void resetPage() {
@@ -298,12 +459,7 @@ public final class WaypointManagerScreen extends Screen {
 
 		switch (this.groupFilter) {
 			case ALL -> {
-				if (groups.isEmpty()) {
-					this.groupFilter = WaypointQuery.GroupFilter.UNGROUPED;
-				} else {
-					this.groupFilter = WaypointQuery.GroupFilter.SPECIFIC;
-					this.groupFilterValue = groups.get(0);
-				}
+				this.groupFilter = WaypointQuery.GroupFilter.UNGROUPED;
 			}
 			case UNGROUPED -> {
 				if (groups.isEmpty()) {
@@ -336,21 +492,7 @@ public final class WaypointManagerScreen extends Screen {
 	}
 
 	private List<String> availableGroups() {
-		Map<String, String> groups = new TreeMap<>();
-
-		for (Waypoint waypoint : CoordKitConfig.get().waypoints) {
-			if (waypoint == null) {
-				continue;
-			}
-
-			String group = Waypoint.normalizeGroup(waypoint.group);
-
-			if (!group.isEmpty()) {
-				groups.putIfAbsent(lower(group), group);
-			}
-		}
-
-		return new ArrayList<>(groups.values());
+		return WaypointGroups.all(CoordKitConfig.get().waypoints);
 	}
 
 	private static int indexOfGroup(List<String> groups, String group) {
@@ -375,10 +517,11 @@ public final class WaypointManagerScreen extends Screen {
 						: "Showing waypoints from every world")));
 
 		this.groupButton.setMessage(groupLabel());
-		this.groupButton.setTooltip(Tooltip.create(Component.literal(
-				this.groupFilter == WaypointQuery.GroupFilter.SPECIFIC
-						? "Group: " + this.groupFilterValue
-						: "Click to cycle group filters")));
+		this.groupButton.setTooltip(Tooltip.create(Component.literal(switch (this.groupFilter) {
+			case ALL -> "Showing every group. Click to show ungrouped only.";
+			case UNGROUPED -> "Showing ungrouped waypoints only. Click to filter by a group.";
+			case SPECIFIC -> "Group: " + this.groupFilterValue + ". Click to cycle group filters.";
+		})));
 
 		this.sortButton.setMessage(sortLabel());
 		this.sortButton.setTooltip(Tooltip.create(Component.literal("Click to change the sort order")));
@@ -391,8 +534,8 @@ public final class WaypointManagerScreen extends Screen {
 	private Component groupLabel() {
 		return switch (this.groupFilter) {
 			case ALL -> Component.literal("Group: All");
-			case UNGROUPED -> Component.literal("Group: Ungrouped");
-			case SPECIFIC -> Component.literal("Group: " + truncate(this.groupFilterValue, 10));
+			case UNGROUPED -> Component.literal("Group: None");
+			case SPECIFIC -> Component.literal("Group: " + truncate(this.groupFilterValue, 7));
 		};
 	}
 
@@ -590,8 +733,11 @@ public final class WaypointManagerScreen extends Screen {
 			String count = shown == total
 					? total + (total == 1 ? " waypoint" : " waypoints")
 					: shown + " of " + total + " waypoints";
+			String selection = this.selected.isEmpty()
+					? "  ·  Del twice to confirm"
+					: "  ·  " + this.selected.size() + " selected";
 			graphics.centeredText(this.font,
-					Component.literal(count + "  ·  Del twice to confirm"),
+					Component.literal(count + selection),
 					this.width / 2, 20, 0xFFA0A0A0);
 		}
 
@@ -604,10 +750,6 @@ public final class WaypointManagerScreen extends Screen {
 		}
 	}
 
-	private static String lower(String value) {
-		return value == null ? "" : value.toLowerCase(Locale.ROOT);
-	}
-
 	private static String truncate(String value, int length) {
 		if (value == null || value.length() <= length) {
 			return value == null ? "" : value;
@@ -615,6 +757,18 @@ public final class WaypointManagerScreen extends Screen {
 
 		int keep = Math.max(0, length - 3);
 		return value.substring(0, keep) + "...";
+	}
+
+	/**
+	 * Trims a row label to the button width using the actual font metrics.
+	 */
+	private String clip(String text, int width) {
+		if (text == null || this.font.width(text) <= width) {
+			return text == null ? "" : text;
+		}
+
+		String ellipsis = "...";
+		return this.font.plainSubstrByWidth(text, Math.max(0, width - this.font.width(ellipsis))) + ellipsis;
 	}
 
 	private static String formatDistance(double distance) {
@@ -627,6 +781,8 @@ public final class WaypointManagerScreen extends Screen {
 
 	@Override
 	public void onClose() {
+		clearSelection();
+
 		if (this.parent != null) {
 			this.minecraft.gui.setScreen(this.parent);
 		} else {

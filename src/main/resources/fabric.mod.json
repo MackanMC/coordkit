@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "coordkit",
+	"version": "${version}",
+	"name": "CoordKit",
+	"description": "Client-side HUD with coordinates, facing, biome, time, FPS and more, plus screen-space waypoint markers and a waypoint manager.",
+	"authors": [
+		"MACKAN"
+	],
+	"license": "MIT",
+	"icon": "assets/coordkit/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.mackan.coordkit.client.CoordKitClient"
+		],
+		"modmenu": [
+			"com.mackan.coordkit.client.integration.ModMenuIntegration"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": ">=20.0.3"
+	}
+}

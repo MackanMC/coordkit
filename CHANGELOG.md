@@ -6,6 +6,32 @@ All notable changes to CoordKit are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+
+- Per-world/server waypoint scoping: new waypoints are only shown in the world or
+  server where they were created. The editor can switch a waypoint between
+  **World: This** and **World: All**.
+- Automatic death waypoint, updating one waypoint per world and dimension. It can
+  be disabled in settings, and editing it turns it into a normal waypoint.
+- **F10** quick-add saves the player's current position immediately, with
+  duplicate detection.
+- **Add aim** in the waypoint manager saves the block under the crosshair, up to
+  128 blocks away.
+- Action-bar feedback for saving, deleting, toggling and quick-adding waypoints.
+- GitHub Actions build workflow and unit tests for world-scope matching and
+  config migration.
+
+### Changed
+
+- Waypoint coordinates are validated before saving or copying a teleport
+  command; invalid input shows an error instead of silently using old values.
+- Waypoint rows note when a waypoint belongs to another world.
+
+### Fixed
+
+- Waypoints no longer leak between singleplayer worlds or multiplayer servers
+  when scoping is enabled.
+
 ## [1.2.0] - 2026-10-25
 
 ### Added

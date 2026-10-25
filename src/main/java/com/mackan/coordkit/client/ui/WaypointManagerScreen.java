@@ -1,11 +1,15 @@
 package com.mackan.coordkit.client.ui;
 
+import com.mackan.coordkit.client.ClientFeedback;
 import com.mackan.coordkit.client.CoordKitConfig;
 import com.mackan.coordkit.client.Waypoint;
+import com.mackan.coordkit.client.WaypointActions;
+import com.mackan.coordkit.client.WaypointScope;
 import com.mackan.coordkit.client.WaypointStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -65,6 +69,8 @@ public final class WaypointManagerScreen extends Screen {
 					button -> {
 						waypoint.visible = !waypoint.visible;
 						CoordKitConfig.get().save();
+						ClientFeedback.actionBar(this.minecraft,
+								waypoint.name + (waypoint.visible ? " shown" : " hidden"));
 						refresh();
 					}
 			).bounds(x, y, toggleWidth, 20).build());
@@ -89,8 +95,9 @@ public final class WaypointManagerScreen extends Screen {
 		}
 
 		int bottom = this.height - 28;
-		int buttonWidth = 100;
-		int totalWidth = buttonWidth * 3 + gap * 2;
+		int available = Math.max(240, this.width - 20);
+		int buttonWidth = Math.min(100, (available - gap * 3) / 4);
+		int totalWidth = buttonWidth * 4 + gap * 3;
 		int buttonX = (this.width - totalWidth) / 2;
 
 		Button add = Button.builder(
@@ -98,22 +105,35 @@ public final class WaypointManagerScreen extends Screen {
 				button -> addHere()
 		).bounds(buttonX, bottom, buttonWidth, 20).build();
 		add.active = this.minecraft.player != null && this.minecraft.level != null;
+		add.setTooltip(Tooltip.create(Component.literal("Save your current position")));
 		addRenderableWidget(add);
+
+		Button addAim = Button.builder(
+				Component.literal("Add aim"),
+				button -> addLookingAt()
+		).bounds(buttonX + buttonWidth + gap, bottom, buttonWidth, 20).build();
+		addAim.active = this.minecraft.player != null && this.minecraft.level != null;
+		addAim.setTooltip(Tooltip.create(Component.literal("Save the block you are looking at, up to 128 blocks away")));
+		addRenderableWidget(addAim);
 
 		addRenderableWidget(Button.builder(
 				Component.literal("Settings"),
 				button -> this.minecraft.gui.setScreen(new CoordKitConfigScreen(this))
-		).bounds(buttonX + buttonWidth + gap, bottom, buttonWidth, 20).build());
+		).bounds(buttonX + (buttonWidth + gap) * 2, bottom, buttonWidth, 20).build());
 
 		addRenderableWidget(Button.builder(
 				Component.literal("Done"),
 				button -> this.onClose()
-		).bounds(buttonX + (buttonWidth + gap) * 2, bottom, buttonWidth, 20).build());
+		).bounds(buttonX + (buttonWidth + gap) * 3, bottom, buttonWidth, 20).build());
 	}
 
 	private String rowLabel(Waypoint waypoint) {
 		if (this.minecraft.player == null || this.minecraft.level == null) {
 			return waypoint.name;
+		}
+
+		if (!WaypointScope.isVisibleIn(waypoint, WaypointScope.currentWorldKey(this.minecraft))) {
+			return waypoint.name + "  ·  other world";
 		}
 
 		boolean sameDimension = waypoint.dimensionId().equals(this.minecraft.level.dimension().identifier());
@@ -148,15 +168,26 @@ public final class WaypointManagerScreen extends Screen {
 		}
 
 		CoordKitConfig config = CoordKitConfig.get();
-		String dimension = client.level.dimension().identifier().toString();
-		Waypoint waypoint = new Waypoint(
-				"Waypoint " + (config.waypoints.size() + 1),
-				client.player.getX(),
-				client.player.getY(),
-				client.player.getZ(),
-				dimension,
+		Waypoint waypoint = WaypointActions.create(
+				client,
+				config,
+				client.player.position(),
+				WaypointActions.suggestedName(config),
 				WaypointStyle.colorAt(config.waypoints.size())
 		);
+
+		client.gui.setScreen(new WaypointEditScreen(this, waypoint, true));
+	}
+
+	private void addLookingAt() {
+		Minecraft client = Minecraft.getInstance();
+		CoordKitConfig config = CoordKitConfig.get();
+		Waypoint waypoint = WaypointActions.createAtCrosshair(client, config);
+
+		if (waypoint == null) {
+			ClientFeedback.actionBar(client, "Look at a block within 128 blocks");
+			return;
+		}
 
 		client.gui.setScreen(new WaypointEditScreen(this, waypoint, true));
 	}
@@ -174,6 +205,7 @@ public final class WaypointManagerScreen extends Screen {
 			CoordKitConfig.get().waypoints.remove(waypoint);
 			CoordKitConfig.get().save();
 			this.pendingDelete = null;
+			ClientFeedback.actionBar(this.minecraft, "Waypoint deleted");
 			refresh();
 		} else {
 			this.pendingDelete = waypoint;

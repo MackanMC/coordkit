@@ -137,6 +137,14 @@ public final class CoordKitConfigScreen extends Screen {
 		y += 24;
 
 		addRenderableWidget(toggle(left, y, width, "Edge arrows", () -> config.markerOffscreenArrows, value -> config.markerOffscreenArrows = value));
+		y += 24;
+
+		addRenderableWidget(toggle(left, y, width, "New waypoints: this world only",
+				() -> config.scopeNewWaypointsToWorld, value -> config.scopeNewWaypointsToWorld = value));
+		y += 24;
+
+		addRenderableWidget(toggle(left, y, width, "Death waypoint",
+				() -> config.createDeathWaypoint, value -> config.createDeathWaypoint = value));
 	}
 
 	private void switchTab(int target) {

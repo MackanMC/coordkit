@@ -23,6 +23,9 @@ public final class CoordKitClient implements ClientModInitializer {
 	private static final KeyMapping COPY_COORDS = register("key.coordkit.copy_coords", InputConstants.KEY_F7);
 	private static final KeyMapping OPEN_SETTINGS = register("key.coordkit.open_settings", InputConstants.KEY_F8);
 	private static final KeyMapping OPEN_WAYPOINTS = register("key.coordkit.open_waypoints", InputConstants.KEY_F9);
+	private static final KeyMapping ADD_WAYPOINT = register("key.coordkit.add_waypoint", InputConstants.KEY_F10);
+
+	private static boolean wasDead;
 
 	private static KeyMapping register(String translationKey, int keyCode) {
 		return KeyMappingHelper.registerKeyMapping(new KeyMapping(
@@ -43,7 +46,7 @@ public final class CoordKitClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(CoordKitClient::onEndTick);
 
-		CoordKit.LOGGER.info("CoordKit loaded (F6 HUD, F7 copy coords, F8 settings, F9 waypoints)");
+		CoordKit.LOGGER.info("CoordKit loaded (F6 HUD, F7 copy coords, F8 settings, F9 waypoints, F10 add waypoint)");
 	}
 
 	private static void onEndTick(Minecraft client) {
@@ -51,12 +54,7 @@ public final class CoordKitClient implements ClientModInitializer {
 			CoordKitConfig config = CoordKitConfig.get();
 			config.showHud = !config.showHud;
 			config.save();
-
-			if (client.player != null) {
-				client.player.sendSystemMessage(Component.literal(
-						"CoordKit HUD " + (config.showHud ? "enabled" : "disabled")
-				));
-			}
+			ClientFeedback.actionBar(client, "CoordKit HUD " + (config.showHud ? "enabled" : "disabled"));
 		}
 
 		while (COPY_COORDS.consumeClick()) {
@@ -83,5 +81,30 @@ public final class CoordKitClient implements ClientModInitializer {
 		while (OPEN_WAYPOINTS.consumeClick()) {
 			client.gui.setScreen(new WaypointManagerScreen(null));
 		}
+
+		while (ADD_WAYPOINT.consumeClick()) {
+			WaypointActions.addHere(client, CoordKitConfig.get());
+		}
+
+		handleDeath(client);
+	}
+
+	private static void handleDeath(Minecraft client) {
+		if (client.player == null || client.level == null) {
+			wasDead = false;
+			return;
+		}
+
+		boolean dead = client.player.isDeadOrDying();
+
+		if (dead && !wasDead) {
+			CoordKitConfig config = CoordKitConfig.get();
+
+			if (config.createDeathWaypoint) {
+				WaypointActions.createDeathWaypoint(client, config);
+			}
+		}
+
+		wasDead = dead;
 	}
 }

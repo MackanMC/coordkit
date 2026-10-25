@@ -2,6 +2,8 @@ package com.mackan.coordkit.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mackan.coordkit.CoordKit;
 import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +44,9 @@ public final class CoordKitConfig {
 	public boolean markerOffscreenArrows = true;
 	public int markerMaxDistance = 512;
 
+	public boolean scopeNewWaypointsToWorld = true;
+	public boolean createDeathWaypoint = true;
+
 	public List<Waypoint> waypoints = new ArrayList<>();
 
 	public static CoordKitConfig get() {
@@ -55,11 +60,26 @@ public final class CoordKitConfig {
 	private static CoordKitConfig load() {
 		if (Files.exists(PATH)) {
 			try (Reader reader = Files.newBufferedReader(PATH)) {
-				CoordKitConfig loaded = GSON.fromJson(reader, CoordKitConfig.class);
+				JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+				CoordKitConfig loaded = GSON.fromJson(json, CoordKitConfig.class);
 
 				if (loaded != null) {
 					if (loaded.waypoints == null) {
 						loaded.waypoints = new ArrayList<>();
+					}
+
+					// Config fields added after 1.2.0 must default to enabled
+					// when they are missing from an older file.
+					if (!json.has("scopeNewWaypointsToWorld")) {
+						loaded.scopeNewWaypointsToWorld = true;
+					}
+
+					if (!json.has("createDeathWaypoint")) {
+						loaded.createDeathWaypoint = true;
+					}
+
+					for (Waypoint waypoint : loaded.waypoints) {
+						waypoint.world = WaypointScope.normalizeWorld(waypoint.world);
 					}
 
 					loaded.maxWaypoints = Math.max(1, Math.min(10, loaded.maxWaypoints));

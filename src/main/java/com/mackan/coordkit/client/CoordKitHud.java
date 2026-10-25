@@ -46,6 +46,7 @@ public final class CoordKitHud {
 		}
 
 		Identifier dimension = client.level.dimension().identifier();
+		String currentWorld = WaypointScope.currentWorldKey(client);
 		double x = client.player.getX();
 		double y = client.player.getY();
 		double z = client.player.getZ();
@@ -138,6 +139,7 @@ public final class CoordKitHud {
 			config.waypoints.stream()
 					.filter(waypoint -> waypoint.visible)
 					.filter(waypoint -> waypoint.dimensionId().equals(dimension))
+					.filter(waypoint -> WaypointScope.isVisibleIn(waypoint, currentWorld))
 					.sorted(Comparator.comparingDouble(waypoint -> waypoint.distanceTo(x, y, z)))
 					.limit(config.maxWaypoints)
 					.forEach(waypoint -> lines.add(new Line(

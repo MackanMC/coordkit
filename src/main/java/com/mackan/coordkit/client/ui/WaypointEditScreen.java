@@ -1,12 +1,15 @@
 package com.mackan.coordkit.client.ui;
 
+import com.mackan.coordkit.client.ClientFeedback;
 import com.mackan.coordkit.client.CoordKitConfig;
 import com.mackan.coordkit.client.Waypoint;
+import com.mackan.coordkit.client.WaypointScope;
 import com.mackan.coordkit.client.WaypointStyle;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
@@ -30,6 +33,9 @@ public final class WaypointEditScreen extends Screen {
 
 	private int colorIndex;
 	private boolean deleteArmed;
+	private boolean scoped;
+	private String scopeKey;
+	private String error = "";
 
 	public WaypointEditScreen(WaypointManagerScreen parent, Waypoint waypoint, boolean isNew) {
 		super(Component.literal(isNew ? "New Waypoint" : "Edit Waypoint"));
@@ -37,6 +43,8 @@ public final class WaypointEditScreen extends Screen {
 		this.waypoint = waypoint;
 		this.isNew = isNew;
 		this.colorIndex = WaypointStyle.indexOf(waypoint.color);
+		this.scopeKey = waypoint.world == null ? "" : waypoint.world;
+		this.scoped = !this.scopeKey.isEmpty();
 	}
 
 	@Override
@@ -72,8 +80,14 @@ public final class WaypointEditScreen extends Screen {
 		this.colorButton = Button.builder(colorLabel(), button -> {
 			this.colorIndex = (this.colorIndex + 1) % WaypointStyle.COLORS.length;
 			button.setMessage(colorLabel());
-		}).bounds(left, 116, 150, 20).build();
+		}).bounds(left, 116, 140, 20).build();
 		addRenderableWidget(this.colorButton);
+
+		Button scopeButton = Button.builder(scopeLabel(), button -> toggleScope(button))
+				.bounds(left + 160, 116, 140, 20).build();
+		scopeButton.setTooltip(Tooltip.create(Component.literal(
+				"Only show this waypoint in one world or server. All shows it in every world.")));
+		addRenderableWidget(scopeButton);
 
 		addRenderableWidget(Button.builder(Component.literal("Save"), button -> save())
 				.bounds(left, 152, 148, 20).build());
@@ -97,13 +111,56 @@ public final class WaypointEditScreen extends Screen {
 		return Component.literal("Color: " + WaypointStyle.nameAt(this.colorIndex));
 	}
 
+	private Component scopeLabel() {
+		if (!this.scoped) {
+			return Component.literal("World: All");
+		}
+
+		String current = WaypointScope.currentWorldKey(this.minecraft);
+		return Component.literal(current.equals(this.scopeKey) ? "World: This" : "World: Other");
+	}
+
+	private void toggleScope(Button button) {
+		if (this.scoped) {
+			this.scoped = false;
+		} else {
+			String current = WaypointScope.currentWorldKey(this.minecraft);
+
+			if (current.isEmpty()) {
+				this.error = "World is not available here";
+				return;
+			}
+
+			this.scopeKey = current;
+			this.scoped = true;
+		}
+
+		this.error = "";
+		button.setMessage(scopeLabel());
+	}
+
 	private void save() {
+		Double x = parseValue(this.xBox.getValue());
+		Double y = parseValue(this.yBox.getValue());
+		Double z = parseValue(this.zBox.getValue());
+
+		if (x == null || y == null || z == null) {
+			this.error = "Coordinates must be valid numbers";
+			return;
+		}
+
+		this.error = "";
 		String name = this.nameBox.getValue().trim();
 		this.waypoint.name = name.isEmpty() ? "Waypoint" : name;
-		this.waypoint.x = parse(this.xBox.getValue(), this.waypoint.x);
-		this.waypoint.y = parse(this.yBox.getValue(), this.waypoint.y);
-		this.waypoint.z = parse(this.zBox.getValue(), this.waypoint.z);
+		this.waypoint.x = x;
+		this.waypoint.y = y;
+		this.waypoint.z = z;
 		this.waypoint.color = WaypointStyle.colorAt(this.colorIndex);
+		this.waypoint.world = this.scoped ? this.scopeKey : "";
+
+		// Editing an automatic death waypoint turns it into a normal waypoint,
+		// so the next death does not overwrite the player's changes.
+		this.waypoint.autoDeath = false;
 
 		CoordKitConfig config = CoordKitConfig.get();
 
@@ -112,6 +169,7 @@ public final class WaypointEditScreen extends Screen {
 		}
 
 		config.save();
+		ClientFeedback.actionBar(this.minecraft, "Waypoint saved");
 		back();
 	}
 
@@ -129,23 +187,24 @@ public final class WaypointEditScreen extends Screen {
 		CoordKitConfig config = CoordKitConfig.get();
 		config.waypoints.remove(this.waypoint);
 		config.save();
+		ClientFeedback.actionBar(this.minecraft, "Waypoint deleted");
 		back();
 	}
 
 	private void copyTeleport() {
-		String command = String.format(
-				Locale.ROOT,
-				"/tp @s %.2f %.2f %.2f",
-				parse(this.xBox.getValue(), this.waypoint.x),
-				parse(this.yBox.getValue(), this.waypoint.y),
-				parse(this.zBox.getValue(), this.waypoint.z)
-		);
+		Double x = parseValue(this.xBox.getValue());
+		Double y = parseValue(this.yBox.getValue());
+		Double z = parseValue(this.zBox.getValue());
 
-		this.minecraft.keyboardHandler.setClipboard(command);
-
-		if (this.minecraft.player != null) {
-			this.minecraft.player.sendSystemMessage(Component.literal("Copied: " + command));
+		if (x == null || y == null || z == null) {
+			this.error = "Coordinates must be valid numbers";
+			return;
 		}
+
+		this.error = "";
+		String command = String.format(Locale.ROOT, "/tp @s %.2f %.2f %.2f", x, y, z);
+		this.minecraft.keyboardHandler.setClipboard(command);
+		ClientFeedback.chat(this.minecraft, "Copied: " + command);
 	}
 
 	private void back() {
@@ -171,13 +230,17 @@ public final class WaypointEditScreen extends Screen {
 		int left = this.width / 2 - 150;
 		graphics.text(this.font, "Name", left, 52, 0xFFA0A0A0, false);
 		graphics.text(this.font, "Position (X / Y / Z)", left, 72, 0xFFA0A0A0, false);
-		graphics.text(this.font, this.waypoint.dimensionShortName(), left + 174, 122, 0xFFA0A0A0, false);
+		graphics.text(this.font, "Dimension: " + this.waypoint.dimensionShortName(),
+				left, 140, 0xFFA0A0A0, false);
 
 		int swatchColor = 0xFF000000 | WaypointStyle.colorAt(this.colorIndex);
-		graphics.fill(left + 156, 120, left + 168, 132, swatchColor);
+		graphics.fill(left + 144, 120, left + 156, 132, swatchColor);
 
-		graphics.centeredText(this.font, Component.literal("Enter saves  ·  Esc cancels"),
-				this.width / 2, this.height - 26, 0xFF808080);
+		Component footer = this.error.isEmpty()
+				? Component.literal("Enter saves  ·  Esc cancels")
+				: Component.literal(this.error);
+		graphics.centeredText(this.font, footer, this.width / 2, this.height - 26,
+				this.error.isEmpty() ? 0xFF808080 : 0xFFFF5555);
 	}
 
 	@Override
@@ -189,11 +252,12 @@ public final class WaypointEditScreen extends Screen {
 		return String.format(Locale.ROOT, "%.2f", value);
 	}
 
-	private static double parse(String raw, double fallback) {
+	private static Double parseValue(String raw) {
 		try {
-			return Double.parseDouble(raw.trim().replace(',', '.'));
+			double value = Double.parseDouble(raw.trim().replace(',', '.'));
+			return Double.isFinite(value) ? value : null;
 		} catch (NumberFormatException e) {
-			return fallback;
+			return null;
 		}
 	}
 }

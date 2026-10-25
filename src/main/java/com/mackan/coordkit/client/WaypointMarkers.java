@@ -41,6 +41,7 @@ public final class WaypointMarkers {
 		}
 
 		Identifier dimension = client.level.dimension().identifier();
+		String currentWorld = WaypointScope.currentWorldKey(client);
 		Vec3 cameraPos = camera.position();
 		int screenWidth = graphics.guiWidth();
 		int screenHeight = graphics.guiHeight();
@@ -52,7 +53,8 @@ public final class WaypointMarkers {
 		List<Marker> markers = new ArrayList<>();
 
 		for (Waypoint waypoint : config.waypoints) {
-			if (!waypoint.visible || !waypoint.dimensionId().equals(dimension)) {
+			if (!waypoint.visible || !waypoint.dimensionId().equals(dimension)
+					|| !WaypointScope.isVisibleIn(waypoint, currentWorld)) {
 				continue;
 			}
 

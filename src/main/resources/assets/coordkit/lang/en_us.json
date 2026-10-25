@@ -3,5 +3,6 @@
 	"key.coordkit.toggle_hud": "Toggle HUD",
 	"key.coordkit.copy_coords": "Copy coordinates as /tp",
 	"key.coordkit.open_settings": "Open settings",
-	"key.coordkit.open_waypoints": "Open waypoint manager"
+	"key.coordkit.open_waypoints": "Open waypoint manager",
+	"key.coordkit.add_waypoint": "Add waypoint here"
 }

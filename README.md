@@ -31,11 +31,19 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ### Waypoints
 - **F9** opens the waypoint manager.
+- **F10** adds a waypoint at your current position immediately.
 - **Add here** saves your current position (name, X/Y/Z, dimension, colour).
+- **Add aim** saves the block you are looking at, up to 128 blocks away.
 - Click a waypoint name to edit it; **TP** copies `/tp @s <x> <y> <z>`.
 - Toggle a waypoint on/off with its **ON / OFF** button.
 - **Del** asks for confirmation on the second click.
 - Coordinates and names are editable; colours come from an 8-colour palette.
+- New waypoints are scoped to the current world or server by default, so bases
+  from one world do not appear in another. Old waypoints without a scope remain
+  global; the editor can switch any waypoint between **World: This** and
+  **World: All**.
+- A death waypoint is created automatically when you die. The latest death in
+  each world and dimension is updated in place; the setting can be turned off.
 
 ### Screens
 - **F8** opens the settings screen, which has two tabs:
@@ -55,8 +63,9 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 | `F7` | Copy your position as `/tp @s <x> <y> <z>` |
 | `F8` | Open settings |
 | `F9` | Open waypoint manager |
+| `F10` | Add a waypoint at your position |
 
-All four keybinds can be changed in *Options → Controls → Key Binds*
+All five keybinds can be changed in *Options → Controls → Key Binds*
 (category: CoordKit).
 
 ## Config file
@@ -80,6 +89,8 @@ All four keybinds can be changed in *Options → Controls → Key Binds*
   "showMarkers": true,
   "markerOffscreenArrows": true,
   "markerMaxDistance": 512,
+  "scopeNewWaypointsToWorld": true,
+  "createDeathWaypoint": true,
   "waypoints": [
     {
       "name": "Base",
@@ -88,7 +99,9 @@ All four keybinds can be changed in *Options → Controls → Key Binds*
       "z": -256.5,
       "dimension": "minecraft:overworld",
       "color": 4632774,
-      "visible": true
+      "visible": true,
+      "world": "sp:my-world",
+      "autoDeath": false
     }
   ]
 }
@@ -133,11 +146,14 @@ $env:JAVA_HOME = 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot'
 src/main/java/com/mackan/coordkit/
 ├── CoordKit.java                      shared constants (mod id, logger, id helper)
 └── client/
-    ├── CoordKitClient.java            entrypoint: keybinds + HUD registration
+    ├── CoordKitClient.java            entrypoint: keybinds, HUD and death handling
     ├── CoordKitHud.java               HUD panel + waypoint list rendering
     ├── WaypointMarkers.java           camera-to-screen waypoint markers
     ├── CoordKitConfig.java            JSON config + waypoint list
     ├── Waypoint.java                  waypoint data model
+    ├── WaypointActions.java           shared create, quick-add and death logic
+    ├── WaypointScope.java             world/server identity and visibility
+    ├── ClientFeedback.java            action-bar and chat helpers
     ├── WaypointStyle.java             colour palette
     ├── integration/
     │   └── ModMenuIntegration.java    optional Mod Menu config-screen hook
@@ -145,6 +161,8 @@ src/main/java/com/mackan/coordkit/
         ├── CoordKitConfigScreen.java  tabbed settings screen
         ├── WaypointManagerScreen.java scrollable waypoint list
         └── WaypointEditScreen.java    add/edit a waypoint
+src/test/java/com/mackan/coordkit/client/
+└── WaypointScopeTest.java             world-scope matching + config migration
 src/main/resources/
 ├── fabric.mod.json
 └── assets/coordkit/                   icon + en_us translations
@@ -154,6 +172,8 @@ src/main/resources/
 
 - The mod is `"environment": "client"`, so it does nothing on a dedicated server
   even if the jar is placed in the server's `mods` folder.
+- Waypoints from configs created before 1.3.0 have no world scope and therefore
+  remain visible in every world until you edit them.
 - 26.2 is unobfuscated; Loom therefore needs no mappings configuration.
 - 26.2 renamed most GUI APIs: screens render through
   `GuiGraphicsExtractor.extractRenderState(...)`, input arrives as `KeyEvent` /

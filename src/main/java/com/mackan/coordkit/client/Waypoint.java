@@ -20,6 +20,17 @@ public final class Waypoint {
 	public int color = 0x46D0C6;
 	public boolean visible = true;
 
+	/**
+	 * World/server identifier from {@link WaypointScope}. Empty means the
+	 * waypoint is global and appears in every world.
+	 */
+	public String world = "";
+
+	/**
+	 * True for the waypoint managed automatically after death.
+	 */
+	public boolean autoDeath = false;
+
 	public Waypoint() {
 	}
 

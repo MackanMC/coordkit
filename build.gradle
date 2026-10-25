@@ -11,6 +11,8 @@ base {
 
 repositories {
 	// Loom adds the Minecraft and Fabric repositories automatically.
+	mavenCentral()
+
 	maven {
 		name = 'TerraformersMC'
 		url = 'https://maven.terraformersmc.com/releases/'
@@ -26,6 +28,13 @@ dependencies {
 	// (This Loom has no modCompileOnly/modLocalRuntime configurations.)
 	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 	runtimeOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
 }
 
 processResources {

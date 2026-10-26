@@ -5,6 +5,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -79,11 +80,12 @@ public final class WaypointActions {
 	}
 
 	/**
-	 * Returns a new (unsaved) waypoint at the block the player is looking at,
-	 * or {@code null} when no block is within range.
+	 * Returns the centre of the block the player is looking at within 128
+	 * blocks, or {@code null} when the crosshair is not on a block.
 	 */
-	public static Waypoint createAtCrosshair(Minecraft client, CoordKitConfig config) {
-		if (client.player == null || client.level == null) {
+	@Nullable
+	public static Vec3 crosshairTarget(Minecraft client) {
+		if (client.player == null) {
 			return null;
 		}
 
@@ -93,10 +95,28 @@ public final class WaypointActions {
 			return null;
 		}
 
+		return Vec3.atCenterOf(blockHit.getBlockPos());
+	}
+
+	/**
+	 * Returns a new (unsaved) waypoint at the block the player is looking at,
+	 * or {@code null} when no block is within range.
+	 */
+	public static Waypoint createAtCrosshair(Minecraft client, CoordKitConfig config) {
+		if (client.player == null || client.level == null) {
+			return null;
+		}
+
+		Vec3 target = crosshairTarget(client);
+
+		if (target == null) {
+			return null;
+		}
+
 		return create(
 				client,
 				config,
-				Vec3.atCenterOf(blockHit.getBlockPos()),
+				target,
 				suggestedName(config),
 				WaypointStyle.colorAt(config.waypoints.size())
 		);

@@ -28,6 +28,7 @@ public final class CoordKitConfig {
 
 	public boolean showHud = true;
 	public boolean showCoordinates = true;
+	public boolean showConvertedCoords = false;
 	public boolean showDimension = true;
 	public boolean showFps = true;
 	public boolean showClock = true;
@@ -114,6 +115,10 @@ public final class CoordKitConfig {
 		// layers, which replace the old combined light switch.
 		if (!json.has("showCoordinates")) {
 			loaded.showCoordinates = true;
+		}
+
+		if (!json.has("showConvertedCoords")) {
+			loaded.showConvertedCoords = false;
 		}
 
 		if (!json.has("showDimension")) {

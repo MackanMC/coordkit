@@ -1,7 +1,8 @@
 package com.mackan.coordkit.client;
 
 import com.mackan.coordkit.CoordKit;
-import com.mackan.coordkit.client.ui.CoordKitConfigScreen;import com.mackan.coordkit.client.ui.WaypointManagerScreen;
+import com.mackan.coordkit.client.ui.CoordKitConfigScreen;
+import com.mackan.coordkit.client.ui.WaypointManagerScreen;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -24,6 +25,7 @@ public final class CoordKitClient implements ClientModInitializer {
 	private static final KeyMapping OPEN_SETTINGS = register("key.coordkit.open_settings", InputConstants.KEY_F8);
 	private static final KeyMapping OPEN_WAYPOINTS = register("key.coordkit.open_waypoints", InputConstants.KEY_F9);
 	private static final KeyMapping ADD_WAYPOINT = register("key.coordkit.add_waypoint", InputConstants.KEY_F10);
+	private static final KeyMapping MEASURE = register("key.coordkit.measure", InputConstants.KEY_B);
 
 	private static boolean wasDead;
 	private static String lastWorldKey = "";
@@ -47,10 +49,12 @@ public final class CoordKitClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(CoordKitClient::onEndTick);
 
-		CoordKit.LOGGER.info("CoordKit loaded (F6 HUD, F7 copy coords, F8 settings, F9 waypoints, F10 add waypoint)");
+		CoordKit.LOGGER.info("CoordKit loaded (F6 HUD, F7 copy coords, F8 settings, F9 waypoints, F10 add waypoint, B measure)");
 	}
 
 	private static void onEndTick(Minecraft client) {
+		MeasureOverlay.tick(client);
+
 		while (TOGGLE_HUD.consumeClick()) {
 			CoordKitConfig config = CoordKitConfig.get();
 			config.showHud = !config.showHud;
@@ -85,6 +89,10 @@ public final class CoordKitClient implements ClientModInitializer {
 
 		while (ADD_WAYPOINT.consumeClick()) {
 			WaypointActions.addHere(client, CoordKitConfig.get());
+		}
+
+		while (MEASURE.consumeClick()) {
+			MeasureOverlay.press(client);
 		}
 
 		handleDeath(client);

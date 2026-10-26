@@ -2,6 +2,7 @@ package com.mackan.coordkit.client.ui;
 
 import com.mackan.coordkit.client.ClientFeedback;
 import com.mackan.coordkit.client.CoordKitConfig;
+import com.mackan.coordkit.client.DimensionMath;
 import com.mackan.coordkit.client.Waypoint;
 import com.mackan.coordkit.client.WaypointGroups;
 import com.mackan.coordkit.client.WaypointScope;
@@ -112,20 +113,40 @@ public final class WaypointEditScreen extends Screen {
 				"Only show this waypoint in one world or server. All shows it in every world.")));
 		addRenderableWidget(scopeButton);
 
-		addRenderableWidget(Button.builder(Component.literal("Save"), button -> save())
-				.bounds(left, 158, 148, 20).build());
-		addRenderableWidget(Button.builder(Component.literal("Cancel"), button -> back())
-				.bounds(left + 152, 158, 148, 20).build());
+		String counterpart = DimensionMath.counterpart(this.waypoint.dimensionId().toString());
+		boolean convertible = counterpart != null;
+		int saveY = convertible ? 170 : 158;
+		int copyY = convertible ? 194 : 182;
+
+		if (convertible) {
+			addRenderableWidget(Button.builder(Component.literal("Save"), button -> save())
+					.bounds(left, saveY, 90, 20).build());
+			addRenderableWidget(Button.builder(Component.literal("Cancel"), button -> back())
+					.bounds(left + 94, saveY, 90, 20).build());
+
+			Button copyCounterpart = Button.builder(
+					Component.literal("Copy \u2192 " + DimensionMath.label(counterpart)),
+					button -> copyCounterpart()
+			).bounds(left + 188, saveY, 112, 20).build();
+			copyCounterpart.setTooltip(Tooltip.create(Component.literal(
+					"Copies /execute in " + counterpart + " run tp @s <x> <y> <z>")));
+			addRenderableWidget(copyCounterpart);
+		} else {
+			addRenderableWidget(Button.builder(Component.literal("Save"), button -> save())
+					.bounds(left, saveY, 148, 20).build());
+			addRenderableWidget(Button.builder(Component.literal("Cancel"), button -> back())
+					.bounds(left + 152, saveY, 148, 20).build());
+		}
 
 		if (this.isNew) {
 			addRenderableWidget(Button.builder(Component.literal("Copy /tp"), button -> copyTeleport())
-					.bounds(left, 182, 300, 20).build());
+					.bounds(left, copyY, 300, 20).build());
 		} else {
 			addRenderableWidget(Button.builder(Component.literal("Copy /tp"), button -> copyTeleport())
-					.bounds(left, 182, 148, 20).build());
+					.bounds(left, copyY, 148, 20).build());
 
 			this.deleteButton = Button.builder(Component.literal("Delete"), button -> delete())
-					.bounds(left + 152, 182, 148, 20).build();
+					.bounds(left + 152, copyY, 148, 20).build();
 			addRenderableWidget(this.deleteButton);
 		}
 	}
@@ -254,6 +275,37 @@ public final class WaypointEditScreen extends Screen {
 		ClientFeedback.chat(this.minecraft, "Copied: " + command);
 	}
 
+	private void copyCounterpart() {
+		Double x = parseValue(this.xBox.getValue());
+		Double y = parseValue(this.yBox.getValue());
+		Double z = parseValue(this.zBox.getValue());
+		String source = this.waypoint.dimensionId().toString();
+		String counterpart = DimensionMath.counterpart(source);
+
+		if (x == null || y == null || z == null) {
+			this.error = "Coordinates must be valid numbers";
+			return;
+		}
+
+		if (counterpart == null) {
+			this.error = "This dimension has no counterpart";
+			return;
+		}
+
+		this.error = "";
+		DimensionMath.Coordinates converted = DimensionMath.convertCoordinates(x, y, z, source);
+		String command = String.format(
+				Locale.ROOT,
+				"/execute in %s run tp @s %.2f %.2f %.2f",
+				counterpart,
+				converted.x(),
+				converted.y(),
+				converted.z()
+		);
+		this.minecraft.keyboardHandler.setClipboard(command);
+		ClientFeedback.chat(this.minecraft, "Copied: " + command);
+	}
+
 	private void back() {
 		this.minecraft.gui.setScreen(this.parent);
 	}
@@ -277,8 +329,32 @@ public final class WaypointEditScreen extends Screen {
 		int left = this.width / 2 - 150;
 		graphics.text(this.font, "Name", left, 36, 0xFFA0A0A0, false);
 		graphics.text(this.font, "Group", left, 92, 0xFFA0A0A0, false);
+
+		String source = this.waypoint.dimensionId().toString();
+		String counterpart = DimensionMath.counterpart(source);
+		boolean convertible = counterpart != null;
+
 		graphics.text(this.font, "Dimension: " + this.waypoint.dimensionShortName(),
-				left, 140, 0xFFA0A0A0, false);
+				left, convertible ? 136 : 140, 0xFFA0A0A0, false);
+
+		if (convertible) {
+			Double x = parseValue(this.xBox.getValue());
+			Double y = parseValue(this.yBox.getValue());
+			Double z = parseValue(this.zBox.getValue());
+
+			if (x != null && y != null && z != null) {
+				DimensionMath.Coordinates converted = DimensionMath.convertCoordinates(x, y, z, source);
+				String text = String.format(
+						Locale.ROOT,
+						"\u2192 %s %.1f / %.1f / %.1f",
+						DimensionMath.label(counterpart),
+						converted.x(),
+						converted.y(),
+						converted.z()
+				);
+				graphics.text(this.font, text, left, 148, 0xFF9BE8FF, false);
+			}
+		}
 
 		int swatchColor = 0xFF000000 | WaypointStyle.colorAt(this.colorIndex);
 		graphics.fill(left + 144, 118, left + 156, 130, swatchColor);

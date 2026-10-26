@@ -43,6 +43,9 @@ public final class CoordKitHud {
 			WaypointMarkers.render(graphics, client, config);
 		}
 
+		// The ruler is transient and stays visible with the info panel disabled.
+		MeasureOverlay.render(graphics, client);
+
 		if (!config.showHud) {
 			return;
 		}
@@ -57,6 +60,23 @@ public final class CoordKitHud {
 
 		if (config.showCoordinates) {
 			lines.add(new Line(String.format(Locale.ROOT, "XYZ %.2f / %.2f / %.2f", x, y, z), TEXT_COLOR, false));
+		}
+
+		if (config.showConvertedCoords) {
+			String source = dimension.toString();
+			String counterpart = DimensionMath.counterpart(source);
+
+			if (counterpart != null) {
+				DimensionMath.Coordinates converted = DimensionMath.convertCoordinates(x, y, z, source);
+				lines.add(new Line(String.format(
+						Locale.ROOT,
+						"%s %.1f / %.1f / %.1f",
+						DimensionMath.label(counterpart),
+						converted.x(),
+						converted.y(),
+						converted.z()
+				), TEXT_COLOR, false));
+			}
 		}
 
 		if (config.showChunk) {

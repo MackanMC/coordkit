@@ -10,13 +10,15 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 /**
- * Settings with two tabs: HUD contents and waypoint display.
+ * Settings with three tabs: HUD contents, waypoint display and navigation.
  */
 public final class CoordKitConfigScreen extends Screen {
 	private static final int TAB_HUD = 0;
 	private static final int TAB_WAYPOINTS = 1;
+	private static final int TAB_NAVIGATION = 2;
 	private static final int COLUMN_WIDTH = 150;
 	private static final int COLUMN_GAP = 8;
+	private static final int TAB_WIDTH = 100;
 	private static final int[] MARKER_RANGES = {64, 128, 256, 512, 1024, 2048, 4096};
 
 	private final Screen parent;
@@ -37,24 +39,18 @@ public final class CoordKitConfigScreen extends Screen {
 		super.init();
 
 		CoordKitConfig config = CoordKitConfig.get();
-		int tabX = Math.max(4, this.width / 2 - COLUMN_WIDTH - COLUMN_GAP / 2);
+		int tabWidth = Math.min(TAB_WIDTH, Math.max(40, (this.width - 8 - COLUMN_GAP * 2) / 3));
+		int tabsWidth = tabWidth * 3 + COLUMN_GAP * 2;
+		int tabX = Math.max(4, (this.width - tabsWidth) / 2);
 
-		Button hudTab = Button.builder(
-				tabLabel("HUD", TAB_HUD),
-				button -> switchTab(TAB_HUD)
-		).bounds(tabX, 34, COLUMN_WIDTH, 20).build();
-		hudTab.active = this.tab != TAB_HUD;
-		addRenderableWidget(hudTab);
-
-		Button waypointTab = Button.builder(
-				tabLabel("Waypoints", TAB_WAYPOINTS),
-				button -> switchTab(TAB_WAYPOINTS)
-		).bounds(tabX + COLUMN_WIDTH + COLUMN_GAP, 34, COLUMN_WIDTH, 20).build();
-		waypointTab.active = this.tab != TAB_WAYPOINTS;
-		addRenderableWidget(waypointTab);
+		addTab(tabX, tabWidth, "HUD", TAB_HUD);
+		addTab(tabX + tabWidth + COLUMN_GAP, tabWidth, "Waypoints", TAB_WAYPOINTS);
+		addTab(tabX + (tabWidth + COLUMN_GAP) * 2, tabWidth, "Navigation", TAB_NAVIGATION);
 
 		if (this.tab == TAB_WAYPOINTS) {
 			initWaypointTab(config);
+		} else if (this.tab == TAB_NAVIGATION) {
+			initNavigationTab(config);
 		} else {
 			initHudTab(config);
 		}
@@ -152,6 +148,21 @@ public final class CoordKitConfigScreen extends Screen {
 				() -> config.createDeathWaypoint, value -> config.createDeathWaypoint = value));
 	}
 
+	private void initNavigationTab(CoordKitConfig config) {
+		int left = Math.max(4, this.width / 2 - COLUMN_WIDTH - COLUMN_GAP / 2);
+		int width = COLUMN_WIDTH * 2 + COLUMN_GAP;
+
+		addRenderableWidget(toggle(left, 68, width, "Other-dimension coordinates",
+				() -> config.showConvertedCoords, value -> config.showConvertedCoords = value));
+	}
+
+	private void addTab(int x, int width, String name, int tab) {
+		Button button = Button.builder(tabLabel(name, tab), clicked -> switchTab(tab))
+				.bounds(x, 34, width, 20).build();
+		button.active = this.tab != tab;
+		addRenderableWidget(button);
+	}
+
 	private void switchTab(int target) {
 		if (target != this.tab) {
 			this.minecraft.gui.setScreen(new CoordKitConfigScreen(this.parent, target));
@@ -195,6 +206,20 @@ public final class CoordKitConfigScreen extends Screen {
 		graphics.centeredText(this.font, this.title, this.width / 2, 8, 0xFFFFFFFF);
 		graphics.centeredText(this.font, Component.literal("Changes are saved automatically"),
 				this.width / 2, 21, 0xFFA0A0A0);
+
+		if (this.tab == TAB_NAVIGATION) {
+			int left = Math.max(4, this.width / 2 - COLUMN_WIDTH - COLUMN_GAP / 2);
+			int y = 98;
+
+			graphics.text(this.font, "Shows the matching Overworld or Nether position",
+					left, y, 0xFFA0A0A0, false);
+			graphics.text(this.font, "under the coordinate line. Y is unchanged.",
+					left, y + 12, 0xFFA0A0A0, false);
+			graphics.text(this.font, "Measure: press B, then aim and press B again.",
+					left, y + 36, 0xFFA0A0A0, false);
+			graphics.text(this.font, "Press B a third time to clear the measurement.",
+					left, y + 48, 0xFFA0A0A0, false);
+		}
 	}
 
 	@Override

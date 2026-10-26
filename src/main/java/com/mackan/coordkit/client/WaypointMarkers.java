@@ -87,7 +87,6 @@ public final class WaypointMarkers {
 		double tanHalfY = Math.tan(Math.toRadians(fov / 2.0));
 		double halfFovY = fov / 2.0;
 		double halfFovX = Math.toDegrees(Math.atan(tanHalfY * aspect));
-		Vec3 forward = new Vec3(camera.forwardVector());
 		double edgeNdcX = 1.0 - 2.0 * EDGE_MARGIN / screenWidth;
 		double edgeNdcY = 1.0 - 2.0 * EDGE_MARGIN / screenHeight;
 		List<Bounds> labels = new ArrayList<>();
@@ -95,10 +94,9 @@ public final class WaypointMarkers {
 		for (Marker marker : markers) {
 			// Use the exact matrix the world is rendered with, so the marker sticks
 			// to the waypoint even with camera bobbing, roll and FOV effects.
-			Vec3 ndc = client.gameRenderer.projectPointToScreen(
-					new Vec3(marker.waypoint.x, marker.waypoint.y, marker.waypoint.z));
-			double forwardDot = marker.dx * forward.x + marker.dy * forward.y + marker.dz * forward.z;
-			boolean inFront = forwardDot > 0.0;
+			ScreenProjection projection = ScreenProjection.project(
+					client, camera, new Vec3(marker.waypoint.x, marker.waypoint.y, marker.waypoint.z));
+			boolean inFront = projection.inFront();
 
 			// Fade distant markers out slightly so near ones stand out.
 			double fade = Mth.clamp(marker.distance / config.markerMaxDistance, 0.0, 1.0);
@@ -107,13 +105,11 @@ public final class WaypointMarkers {
 			int color = (alpha << 24) | rgb;
 			int shadow = ((int) (alpha * 0.65) << 24);
 
-			boolean onScreen = inFront
-					&& ndc.x >= -1.0 && ndc.x <= 1.0
-					&& ndc.y >= -1.0 && ndc.y <= 1.0;
+			boolean onScreen = projection.onScreen();
 
 			if (onScreen) {
-				int x = (int) Math.round((ndc.x + 1.0) * 0.5 * screenWidth);
-				int y = (int) Math.round((1.0 - ndc.y) * 0.5 * screenHeight);
+				int x = projection.screenX(screenWidth);
+				int y = projection.screenY(screenHeight);
 
 				drawDiamond(graphics, x, y, 4, shadow);
 				drawDiamond(graphics, x, y, 3, color);
@@ -126,8 +122,8 @@ public final class WaypointMarkers {
 
 				if (inFront) {
 					// Just outside the view: the projected NDC already points the right way.
-					nx = ndc.x;
-					ny = -ndc.y;
+					nx = projection.ndcX();
+					ny = -projection.ndcY();
 				} else {
 					// Behind the camera the perspective divide flips signs, so fall
 					// back to the relative angles for the arrow direction.

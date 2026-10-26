@@ -106,9 +106,25 @@ class CoordKitConfigTest {
 
 		assertNotNull(config);
 		assertTrue(config.showCoordinates);
+		assertFalse(config.showConvertedCoords);
 		assertTrue(config.showDimension);
 		assertFalse(config.showSkyLight);
 		assertFalse(config.showBlockLight);
+	}
+
+	@Test
+	void convertedCoordinatesSettingIsPreserved() {
+		JsonObject json = JsonParser.parseString(
+				"{\"configVersion\":2,\"showConvertedCoords\":true}").getAsJsonObject();
+
+		CoordKitConfig config = CoordKitConfig.fromJson(json);
+
+		assertNotNull(config);
+		assertTrue(config.showConvertedCoords);
+
+		JsonObject saved = JsonParser.parseString(CoordKitConfig.toJson(config)).getAsJsonObject();
+
+		assertTrue(saved.get("showConvertedCoords").getAsBoolean());
 	}
 
 	@Test

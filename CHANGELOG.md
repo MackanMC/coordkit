@@ -6,6 +6,29 @@ All notable changes to CoordKit are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+
+- **Nether ↔ Overworld conversion**: an optional extra HUD line shows the matching
+  position in the other dimension (X and Z divided by 8 going to the Nether,
+  multiplied by 8 going to the Overworld; Y unchanged). The End and custom
+  dimensions hide the line. The waypoint editor shows the counterpart position
+  and copies a dimension-aware `/execute in <dimension> run tp @s ...` command.
+- **Measure tool**: press `B` to set point A, aim and press again for point B,
+  then a third press to clear. Shows a live preview, a perspective-correct dotted
+  line, endpoint markers, distance, horizontal distance, deltas and midpoint in a
+  top-right panel. When B is set, chat offers clickable **Copy A**, **Copy B** and
+  **Copy midpoint** actions. The measurement is transient and clears on dimension
+  change or leaving the world.
+- `showConvertedCoords` config field, default `false`, for the other-dimension
+  HUD line.
+- A third **Navigation** settings tab for the conversion toggle and a short
+  explanation of the measure tool.
+
+### Changed
+
+- Settings tabs are now **HUD**, **Waypoints** and **Navigation**; the tab strip
+  was narrowed to fit three tabs at the minimum GUI width.
+
 ## [1.5.1] - 2026-10-26
 
 ### Changed

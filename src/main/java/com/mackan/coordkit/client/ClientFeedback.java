@@ -21,4 +21,10 @@ public final class ClientFeedback {
 			client.player.sendSystemMessage(Component.literal(message));
 		}
 	}
+
+	public static void chat(Minecraft client, Component message) {
+		if (client.player != null) {
+			client.player.sendSystemMessage(message);
+		}
+	}
 }

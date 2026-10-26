@@ -3,7 +3,8 @@
 A tiny client-side Fabric mod for **Minecraft 26.2** ("Chaos Cubed").
 
 It adds a compact info panel to the HUD, on-screen waypoint markers, saved waypoints,
-a waypoint manager, and a settings screen — all without touching the server.
+a waypoint manager, a Nether/Overworld coordinate converter, a ruler tool, and a
+settings screen — all without touching the server.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 
@@ -14,10 +15,36 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - Facing (compass point + yaw), biome, in-game time and weather, separate sky and
   block light levels, movement speed and held-item durability.
 - FPS and a real-world clock (both individually toggleable).
-- Every HUD line can be switched off independently from **F8 → HUD**, so the panel
-  can show only coordinates, only FPS and coordinates, or any other combination.
+- Every HUD line can be switched off independently from **F8 → HUD** (the
+  other-dimension line lives under **F8 → Navigation**), so the panel can show
+  only coordinates, only FPS and coordinates, or any other combination.
 - Nearby waypoints below the info lines: coloured dot, name and distance, sorted by
   distance and only shown for the dimension you are in.
+
+### Nether ↔ Overworld conversion
+- Optional extra HUD line with the matching position in the other dimension:
+  Overworld → Nether divides X and Z by 8; Nether → Overworld multiplies them by 8.
+  Y is unchanged.
+- Only the Overworld and the Nether convert. The End and custom dimensions hide the
+  line instead of showing a misleading value.
+- The waypoint editor shows the counterpart position while you edit and can copy a
+  dimension-aware `/execute in <dimension> run tp @s ...` command. A plain `/tp`
+  does not change dimension, so the copy action uses `/execute in` deliberately.
+- Off by default; enable it from **F8 → Navigation**.
+
+### Measure tool
+- Press **B** once to set point A, aim and press **B** again to set point B, and press
+  **B** a third time to clear. The key is rebindable in *Controls*.
+- Points snap to the centre of the block under the crosshair (up to 128 blocks). If
+  no block is in range, the point is placed at your feet.
+- While only A is set, a live ruler preview follows your crosshair.
+- Shows distance, horizontal distance, ΔX/ΔY/ΔZ and the midpoint in a compact
+  top-right panel, with a perspective-correct dotted line between the points.
+- When B is set, chat offers clickable **Copy A**, **Copy B** and **Copy midpoint**
+  actions.
+- The measurement is transient: it is not saved and clears when you change dimension
+  or leave the world.
+- The ruler and its panel stay visible when the main HUD panel is disabled.
 
 ### In-view waypoint markers
 - Every visible waypoint is projected onto the screen from the camera, so you can
@@ -76,12 +103,14 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 
 ### Screens
-- **F8** opens the settings screen, which has two tabs:
-  - **HUD**: panel on/off, coordinates, FPS, clock, chunk line, dimension, facing,
-    biome, time, sky light, block light, speed, durability, waypoint list, markers
-    and edge arrows.
+- **F8** opens the settings screen, which has three tabs:
+  - **HUD**: panel on/off, coordinates, FPS, clock, chunk line, dimension,
+    facing, biome, time, sky light, block light, speed, durability, waypoint
+    list, markers and edge arrows.
   - **Waypoints**: max waypoints on the HUD, marker range, waypoint list / marker
     toggles, and a shortcut to the manager.
+  - **Navigation**: the other-dimension coordinate toggle and a reminder of how
+    the measure tool works.
 - The waypoint manager also opens the export, import and group screens.
 - With [Mod Menu](https://modrinth.com/mod/modmenu) installed, the same screen is
   available from CoordKit's entry in the mod list.
@@ -96,8 +125,9 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 | `F8` | Open settings |
 | `F9` | Open waypoint manager |
 | `F10` | Add a waypoint at your position |
+| `B` | Measure point A → B → clear |
 
-All five keybinds can be changed in *Options → Controls → Key Binds*
+All six keybinds can be changed in *Options → Controls → Key Binds*
 (category: CoordKit).
 
 ## Config file
@@ -109,6 +139,7 @@ All five keybinds can be changed in *Options → Controls → Key Binds*
   "configVersion": 2,
   "showHud": true,
   "showCoordinates": true,
+  "showConvertedCoords": false,
   "showDimension": true,
   "showFps": true,
   "showClock": true,
@@ -146,14 +177,20 @@ All five keybinds can be changed in *Options → Controls → Key Binds*
 
 A pre-1.4.0 file has no `configVersion` or `group`; it is upgraded on load and
 saved with `configVersion: 2`. A single `showLight` value from 1.4.0 is split
-across `showSkyLight` and `showBlockLight` on the next load. Older CoordKit
-versions can still read a newer config, but they ignore fields they do not know
-(including the split light toggles) and drop `group` if they save it.
+across `showSkyLight` and `showBlockLight` on the next load. Configs created
+before the converted-coordinate line load with `showConvertedCoords: false`, so
+the extra line stays hidden until it is enabled. Older CoordKit versions can
+still read a newer config, but they ignore fields they do not know (including
+the split light toggles and the converted-coordinate toggle) and drop `group` if
+they save it.
 
 Deleting the file resets everything to defaults.
 
 ## Roadmap
 
+- **Navigation**: dimension conversion and the measure tool are in the unreleased
+  build. Tracked waypoints, a compass strip, arrival alerts, death history and
+  routes are the next step.
 - **HUD & marker customisation**: further layout, scale, marker style and display
   options. 1.5.0 added per-line HUD toggles and split sky/block light.
 
@@ -202,8 +239,14 @@ src/main/java/com/mackan/coordkit/
     ├── CoordKitClient.java            entrypoint: keybinds, HUD and death handling
     ├── CoordKitHud.java               HUD panel + waypoint list rendering
     ├── WaypointMarkers.java           camera-to-screen waypoint markers
+    ├── ScreenProjection.java          shared world-to-screen projection
     ├── CoordKitConfig.java            JSON config + waypoint list
     ├── Waypoint.java                  waypoint data model
+    ├── DimensionMath.java             Overworld/Nether coordinate conversion
+    ├── MeasurePoint.java              ruler point
+    ├── MeasureMath.java               distance, delta and midpoint helpers
+    ├── MeasureState.java              transient A → B → clear state
+    ├── MeasureOverlay.java            ruler line, endpoint markers and panel
     ├── WaypointActions.java           shared create, quick-add and death logic
     ├── WaypointScope.java             world/server identity and visibility
     ├── WaypointQuery.java             search, filters, sorting and export sets
@@ -224,6 +267,9 @@ src/main/java/com/mackan/coordkit/
         └── GroupRenameScreen.java     rename one group
 src/test/java/com/mackan/coordkit/client/
 ├── CoordKitConfigTest.java            config defaults + migrations
+├── DimensionMathTest.java             Overworld/Nether conversion rules
+├── MeasureMathTest.java               distance, delta and midpoint maths
+├── MeasureStateTest.java              A → B → clear state machine
 ├── WaypointScopeTest.java             world-scope matching and visibility
 ├── WaypointSharingTest.java           JSON/share-code round-trips + validation
 ├── WaypointQueryTest.java             search, filters, sorting, export sets
@@ -248,6 +294,11 @@ src/main/resources/
   fields they do not know (the coordinates/dimension toggles and split light
   settings), and a 1.3.0 save drops the group labels. Update everyone before
   sharing a grouped list.
+- Dimension conversion is display-only. Saved waypoints, share codes and configs
+  keep their original dimension and coordinates; the counterpart line and copy
+  action are derived when they are shown.
+- The measure tool is transient. It has no config fields, is never written to
+  `coordkit.json`, and clears when you change dimension or leave the world.
 - 26.2 is unobfuscated; Loom therefore needs no mappings configuration.
 - 26.2 renamed most GUI APIs: screens render through
   `GuiGraphicsExtractor.extractRenderState(...)`, input arrives as `KeyEvent` /

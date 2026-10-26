@@ -6,6 +6,8 @@ All notable changes to CoordKit are documented here. This project follows
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-26
+
 ### Added
 
 - Individual HUD toggles for the coordinate line and the dimension line, so every
@@ -127,7 +129,8 @@ All notable changes to CoordKit are documented here. This project follows
 
 - Markers no longer drift or sit on an offset when the camera moves.
 
-[Unreleased]: https://github.com/MackanMC/coordkit/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/MackanMC/coordkit/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.5.0
 [1.4.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.4.0
 [1.3.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.3.0
 [1.2.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.2.0

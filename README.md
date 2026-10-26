@@ -154,11 +154,13 @@ Deleting the file resets everything to defaults.
 
 ## Roadmap
 
-- **1.5.0 — HUD & marker customisation**: HUD layout, scale, marker styles and
-  display options.
+- **HUD & marker customisation**: further layout, scale, marker style and display
+  options. 1.5.0 added per-line HUD toggles and split sky/block light.
 
-1.4.0 shipped sharing and organising: export/import, `CK1` share codes, groups,
-search/filter/sort and bulk actions ([spec](docs/1.4.0-spec.md)).
+1.5.0 added finer HUD control: every info line can be toggled independently, and
+sky and block light are shown as separate values. 1.4.0 shipped sharing and
+organising: export/import, `CK1` share codes, groups, search/filter/sort and bulk
+actions ([spec](docs/1.4.0-spec.md)).
 
 ## Requirements
 
@@ -180,7 +182,7 @@ $env:JAVA_HOME = 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot'
 .\gradlew.bat build
 ```
 
-The mod jar ends up in `build/libs/coordkit-1.4.0.jar`.
+The mod jar ends up in `build/libs/coordkit-1.5.0.jar`.
 
 ## Run in a dev client
 
@@ -221,7 +223,7 @@ src/main/java/com/mackan/coordkit/
         ├── WaypointGroupsScreen.java  group list with rename/delete
         └── GroupRenameScreen.java     rename one group
 src/test/java/com/mackan/coordkit/client/
-├── CoordKitConfigTest.java            config defaults + 1.4.0 migration
+├── CoordKitConfigTest.java            config defaults + migrations
 ├── WaypointScopeTest.java             world-scope matching and visibility
 ├── WaypointSharingTest.java           JSON/share-code round-trips + validation
 ├── WaypointQueryTest.java             search, filters, sorting, export sets
@@ -242,8 +244,9 @@ src/main/resources/
 - Exports are written to `config/coordkit/exports/`; **Import latest export**
   reads the newest file there. Share codes carry no group label, so import JSON
   when groups must survive.
-- 1.3.0 clients can read a 1.4.0 config, but they ignore `configVersion` and
-  `group`, and a 1.3.0 save drops the group labels. Update everyone before
+- Older clients (1.4.0 and earlier) can read a 1.5.0 config, but they ignore
+  fields they do not know (the coordinates/dimension toggles and split light
+  settings), and a 1.3.0 save drops the group labels. Update everyone before
   sharing a grouped list.
 - 26.2 is unobfuscated; Loom therefore needs no mappings configuration.
 - 26.2 renamed most GUI APIs: screens render through

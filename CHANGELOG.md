@@ -6,6 +6,19 @@ All notable changes to CoordKit are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+
+- Individual HUD toggles for the coordinate line and the dimension line, so every
+  info line can be shown or hidden on its own.
+- Separate **Sky light** and **Block light** toggles and values, replacing the
+  single combined light level. A 1.4.0 `showLight` setting is applied to both
+  layers when the config is loaded.
+
+### Changed
+
+- The HUD settings tab has room for the new toggles and uses the full window
+  height at the smallest supported GUI size.
+
 ## [1.4.0] - 2026-10-25
 
 ### Added

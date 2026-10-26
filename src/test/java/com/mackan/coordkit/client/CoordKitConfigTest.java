@@ -99,6 +99,53 @@ class CoordKitConfigTest {
 	}
 
 	@Test
+	void hudTogglesDefaultToVisibleForOlderConfigs() {
+		JsonObject json = JsonParser.parseString("{\"configVersion\":2}").getAsJsonObject();
+
+		CoordKitConfig config = CoordKitConfig.fromJson(json);
+
+		assertNotNull(config);
+		assertTrue(config.showCoordinates);
+		assertTrue(config.showDimension);
+		assertFalse(config.showSkyLight);
+		assertFalse(config.showBlockLight);
+	}
+
+	@Test
+	void legacyCombinedLightSettingSplitsIntoBothLayers() {
+		JsonObject json = JsonParser.parseString("{\"configVersion\":2,\"showLight\":true}").getAsJsonObject();
+
+		CoordKitConfig config = CoordKitConfig.fromJson(json);
+
+		assertNotNull(config);
+		assertTrue(config.showSkyLight);
+		assertTrue(config.showBlockLight);
+	}
+
+	@Test
+	void splitLightSettingsArePreserved() {
+		JsonObject json = JsonParser.parseString("""
+				{
+				  "configVersion": 2,
+				  "showLight": true,
+				  "showSkyLight": true,
+				  "showBlockLight": false
+				}
+				""").getAsJsonObject();
+
+		CoordKitConfig config = CoordKitConfig.fromJson(json);
+
+		assertNotNull(config);
+		assertTrue(config.showSkyLight);
+		assertFalse(config.showBlockLight);
+
+		JsonObject saved = JsonParser.parseString(CoordKitConfig.toJson(config)).getAsJsonObject();
+
+		assertTrue(saved.get("showSkyLight").getAsBoolean());
+		assertFalse(saved.get("showBlockLight").getAsBoolean());
+	}
+
+	@Test
 	void missingWaypointsListBecomesEmpty() {
 		JsonObject json = JsonParser.parseString("{\"configVersion\":2}").getAsJsonObject();
 

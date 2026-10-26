@@ -11,9 +11,11 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ### HUD
 - X/Y/Z (2 decimals), block position, chunk position and dimension id.
-- Facing (compass point + yaw), biome, in-game time and weather, light level,
-  movement speed and held-item durability.
+- Facing (compass point + yaw), biome, in-game time and weather, separate sky and
+  block light levels, movement speed and held-item durability.
 - FPS and a real-world clock (both individually toggleable).
+- Every HUD line can be switched off independently from **F8 → HUD**, so the panel
+  can show only coordinates, only FPS and coordinates, or any other combination.
 - Nearby waypoints below the info lines: coloured dot, name and distance, sorted by
   distance and only shown for the dimension you are in.
 
@@ -75,8 +77,9 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ### Screens
 - **F8** opens the settings screen, which has two tabs:
-  - **HUD**: panel on/off, FPS, clock, chunk line, facing, biome, time, light,
-    speed, durability, waypoint list, markers and edge arrows.
+  - **HUD**: panel on/off, coordinates, FPS, clock, chunk line, dimension, facing,
+    biome, time, sky light, block light, speed, durability, waypoint list, markers
+    and edge arrows.
   - **Waypoints**: max waypoints on the HUD, marker range, waypoint list / marker
     toggles, and a shortcut to the manager.
 - The waypoint manager also opens the export, import and group screens.
@@ -105,6 +108,8 @@ All five keybinds can be changed in *Options → Controls → Key Binds*
 {
   "configVersion": 2,
   "showHud": true,
+  "showCoordinates": true,
+  "showDimension": true,
   "showFps": true,
   "showClock": true,
   "showChunk": true,
@@ -113,7 +118,8 @@ All five keybinds can be changed in *Options → Controls → Key Binds*
   "showFacing": true,
   "showBiome": true,
   "showGameTime": true,
-  "showLight": false,
+  "showSkyLight": false,
+  "showBlockLight": false,
   "showSpeed": false,
   "showDurability": true,
   "showMarkers": true,
@@ -139,8 +145,10 @@ All five keybinds can be changed in *Options → Controls → Key Binds*
 ```
 
 A pre-1.4.0 file has no `configVersion` or `group`; it is upgraded on load and
-saved with `configVersion: 2`. Older CoordKit versions can still read a 1.4.0
-config, but they ignore the new fields and drop `group` if they save it.
+saved with `configVersion: 2`. A single `showLight` value from 1.4.0 is split
+across `showSkyLight` and `showBlockLight` on the next load. Older CoordKit
+versions can still read a newer config, but they ignore fields they do not know
+(including the split light toggles) and drop `group` if they save it.
 
 Deleting the file resets everything to defaults.
 

@@ -27,6 +27,8 @@ public final class CoordKitConfig {
 	public int configVersion = 2;
 
 	public boolean showHud = true;
+	public boolean showCoordinates = true;
+	public boolean showDimension = true;
 	public boolean showFps = true;
 	public boolean showClock = true;
 	public boolean showChunk = true;
@@ -37,7 +39,8 @@ public final class CoordKitConfig {
 	public boolean showFacing = true;
 	public boolean showBiome = true;
 	public boolean showGameTime = true;
-	public boolean showLight = false;
+	public boolean showSkyLight = false;
+	public boolean showBlockLight = false;
 	public boolean showSpeed = false;
 	public boolean showDurability = true;
 
@@ -105,6 +108,22 @@ public final class CoordKitConfig {
 
 		if (!json.has("createDeathWaypoint")) {
 			loaded.createDeathWaypoint = true;
+		}
+
+		// HUD toggles added after 1.4.0 default to visible, except the two light
+		// layers, which replace the old combined light switch.
+		if (!json.has("showCoordinates")) {
+			loaded.showCoordinates = true;
+		}
+
+		if (!json.has("showDimension")) {
+			loaded.showDimension = true;
+		}
+
+		if (!json.has("showSkyLight") && !json.has("showBlockLight") && json.has("showLight")) {
+			boolean split = json.get("showLight").getAsBoolean();
+			loaded.showSkyLight = split;
+			loaded.showBlockLight = split;
 		}
 
 		// Missing or zero means the file predates 1.4.0. Do not downgrade a

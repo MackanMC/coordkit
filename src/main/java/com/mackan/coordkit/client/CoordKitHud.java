@@ -3,9 +3,11 @@ package com.mackan.coordkit.client;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.LightLayer;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -53,7 +55,9 @@ public final class CoordKitHud {
 
 		List<Line> lines = new ArrayList<>(12);
 
-		lines.add(new Line(String.format(Locale.ROOT, "XYZ %.2f / %.2f / %.2f", x, y, z), TEXT_COLOR, false));
+		if (config.showCoordinates) {
+			lines.add(new Line(String.format(Locale.ROOT, "XYZ %.2f / %.2f / %.2f", x, y, z), TEXT_COLOR, false));
+		}
 
 		if (config.showChunk) {
 			int blockX = (int) Math.floor(x);
@@ -69,7 +73,9 @@ public final class CoordKitHud {
 			), TEXT_COLOR, false));
 		}
 
-		lines.add(new Line("Dim " + dimension, TEXT_COLOR, false));
+		if (config.showDimension) {
+			lines.add(new Line("Dim " + dimension, TEXT_COLOR, false));
+		}
 
 		float yaw = Mth.wrapDegrees(client.player.getYRot());
 
@@ -104,9 +110,18 @@ public final class CoordKitHud {
 			), TEXT_COLOR, false));
 		}
 
-		if (config.showLight) {
-			int light = client.level.getMaxLocalRawBrightness(client.player.blockPosition());
-			lines.add(new Line("Light " + light, TEXT_COLOR, false));
+		if (config.showSkyLight || config.showBlockLight) {
+			BlockPos pos = client.player.blockPosition();
+			int skyLight = client.level.getBrightness(LightLayer.SKY, pos);
+			int blockLight = client.level.getBrightness(LightLayer.BLOCK, pos);
+
+			String light = config.showSkyLight && config.showBlockLight
+					? String.format(Locale.ROOT, "Light sky %d  block %d", skyLight, blockLight)
+					: config.showSkyLight
+							? "Sky light " + skyLight
+							: "Block light " + blockLight;
+
+			lines.add(new Line(light, TEXT_COLOR, false));
 		}
 
 		if (config.showSpeed) {
@@ -147,6 +162,10 @@ public final class CoordKitHud {
 							0xFF000000 | (waypoint.color & 0xFFFFFF),
 							true
 					)));
+		}
+
+		if (lines.isEmpty()) {
+			return;
 		}
 
 		int width = 0;

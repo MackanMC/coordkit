@@ -61,7 +61,7 @@ public final class CoordKitConfigScreen extends Screen {
 
 		int width = COLUMN_WIDTH * 2 + COLUMN_GAP;
 		int left = Math.max(4, (this.width - width) / 2);
-		int bottom = this.height - 28;
+		int bottom = this.height - 24;
 
 		addRenderableWidget(Button.builder(
 				Component.literal("Manage waypoints..."),
@@ -77,33 +77,38 @@ public final class CoordKitConfigScreen extends Screen {
 	private void initHudTab(CoordKitConfig config) {
 		int left = Math.max(4, this.width / 2 - COLUMN_WIDTH - COLUMN_GAP / 2);
 		int right = left + COLUMN_WIDTH + COLUMN_GAP;
-		int y = 64;
+		int y = 56;
 
 		addRenderableWidget(toggle(left, y, "HUD panel", () -> config.showHud, value -> config.showHud = value));
-		addRenderableWidget(toggle(right, y, "Light level", () -> config.showLight, value -> config.showLight = value));
+		addRenderableWidget(toggle(right, y, "Coordinates", () -> config.showCoordinates, value -> config.showCoordinates = value));
 		y += 20;
 
 		addRenderableWidget(toggle(left, y, "FPS counter", () -> config.showFps, value -> config.showFps = value));
-		addRenderableWidget(toggle(right, y, "Speed", () -> config.showSpeed, value -> config.showSpeed = value));
-		y += 20;
-
-		addRenderableWidget(toggle(left, y, "Clock", () -> config.showClock, value -> config.showClock = value));
-		addRenderableWidget(toggle(right, y, "Held durability", () -> config.showDurability, value -> config.showDurability = value));
+		addRenderableWidget(toggle(right, y, "Clock", () -> config.showClock, value -> config.showClock = value));
 		y += 20;
 
 		addRenderableWidget(toggle(left, y, "Chunk position", () -> config.showChunk, value -> config.showChunk = value));
-		addRenderableWidget(toggle(right, y, "Waypoint list", () -> config.showWaypoints, value -> config.showWaypoints = value));
+		addRenderableWidget(toggle(right, y, "Dimension", () -> config.showDimension, value -> config.showDimension = value));
 		y += 20;
 
 		addRenderableWidget(toggle(left, y, "Facing", () -> config.showFacing, value -> config.showFacing = value));
-		addRenderableWidget(toggle(right, y, "Markers in view", () -> config.showMarkers, value -> config.showMarkers = value));
+		addRenderableWidget(toggle(right, y, "Biome", () -> config.showBiome, value -> config.showBiome = value));
 		y += 20;
 
-		addRenderableWidget(toggle(left, y, "Biome", () -> config.showBiome, value -> config.showBiome = value));
+		addRenderableWidget(toggle(left, y, "Time + weather", () -> config.showGameTime, value -> config.showGameTime = value));
+		addRenderableWidget(toggle(right, y, "Speed", () -> config.showSpeed, value -> config.showSpeed = value));
+		y += 20;
+
+		addRenderableWidget(toggle(left, y, "Sky light", () -> config.showSkyLight, value -> config.showSkyLight = value));
+		addRenderableWidget(toggle(right, y, "Block light", () -> config.showBlockLight, value -> config.showBlockLight = value));
+		y += 20;
+
+		addRenderableWidget(toggle(left, y, "Held durability", () -> config.showDurability, value -> config.showDurability = value));
+		addRenderableWidget(toggle(right, y, "Waypoint list", () -> config.showWaypoints, value -> config.showWaypoints = value));
+		y += 20;
+
+		addRenderableWidget(toggle(left, y, "Markers in view", () -> config.showMarkers, value -> config.showMarkers = value));
 		addRenderableWidget(toggle(right, y, "Edge arrows", () -> config.markerOffscreenArrows, value -> config.markerOffscreenArrows = value));
-		y += 20;
-
-		addRenderableWidget(toggle(left, y, "Game time + weather", () -> config.showGameTime, value -> config.showGameTime = value));
 	}
 
 	private void initWaypointTab(CoordKitConfig config) {

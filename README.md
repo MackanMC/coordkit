@@ -36,10 +36,15 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - Press **B** once to set point A, aim and press **B** again to set point B, and press
   **B** a third time to clear. The key is rebindable in *Controls*.
 - Points snap to the centre of the block under the crosshair (up to 128 blocks). If
-  no block is in range, the point is placed at your feet.
+  no block is in range, the point snaps to the block you are standing on, so both
+  ends are always real blocks and you can measure block to block.
 - While only A is set, a live ruler preview follows your crosshair.
-- Shows distance, horizontal distance, ΔX/ΔY/ΔZ and the midpoint in a compact
-  top-right panel, with a perspective-correct dotted line between the points.
+- The ruler is a dotted staircase through the block centres between the points, so
+  every dot sits on a block and the line follows the block grid instead of cutting
+  diagonally through the world.
+- Distances are reported in blocks, centre to centre: neighbouring blocks read
+  `1 block`. The panel shows distance, horizontal distance, ΔX/ΔY/ΔZ and the
+  midpoint, projected with the same camera matrices as the waypoint markers.
 - When B is set, chat offers clickable **Copy A**, **Copy B** and **Copy midpoint**
   actions.
 - The measurement is transient: it is not saved and clears when you change dimension

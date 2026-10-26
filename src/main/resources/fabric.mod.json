@@ -5,7 +5,7 @@
 	"name": "CoordKit",
 	"description": "Client-side HUD with coordinates, facing, biome, time, FPS and more, plus screen-space waypoint markers and a waypoint manager.",
 	"authors": [
-		"MACKAN"
+		"MackanMC"
 	],
 	"license": "MIT",
 	"icon": "assets/coordkit/icon.png",

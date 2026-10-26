@@ -6,6 +6,10 @@ All notable changes to CoordKit are documented here. This project follows
 
 ## [Unreleased]
 
+### Changed
+
+- Author metadata and copyright now use the name **MackanMC**.
+
 ## [1.5.0] - 2026-10-26
 
 ### Added

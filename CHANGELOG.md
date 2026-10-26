@@ -6,6 +6,8 @@ All notable changes to CoordKit are documented here. This project follows
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-10-26
+
 ### Changed
 
 - Author metadata and copyright now use the name **MackanMC**.
@@ -133,7 +135,8 @@ All notable changes to CoordKit are documented here. This project follows
 
 - Markers no longer drift or sit on an offset when the camera moves.
 
-[Unreleased]: https://github.com/MackanMC/coordkit/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/MackanMC/coordkit/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/MackanMC/coordkit/releases/tag/v1.5.1
 [1.5.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.5.0
 [1.4.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.4.0
 [1.3.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.3.0

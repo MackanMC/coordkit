@@ -282,17 +282,16 @@ public final class MeasureOverlay {
 	}
 
 	/**
-	 * Number of blocks between two block centres. If A is the centre of block X
-	 * and B is the centre of block X+1, the distance between centres is 1.0 and
-	 * there is 1 block between them. Diagonals only count full blocks along each
-	 * axis (floor of the axis delta), matching the request to count blocks
-	 * between the points rather than the centre distance.
+	 * Number of blocks between two points. Counts full blocks strictly between
+	 * them along each axis (Manhattan), so two adjacent blocks have 0 between
+	 * them and a gap of one block between them reads as 1.
 	 */
 	private static long blocksBetween(MeasurePoint a, MeasurePoint b) {
 		long dx = (long) Math.floor(Math.abs(b.x() - a.x()));
 		long dy = (long) Math.floor(Math.abs(b.y() - a.y()));
 		long dz = (long) Math.floor(Math.abs(b.z() - a.z()));
-		return dx + dy + dz;
+		long total = dx + dy + dz;
+		return Math.max(0, total - 1);
 	}
 
 	private static Target currentTarget(Minecraft client) {

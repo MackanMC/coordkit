@@ -14,13 +14,12 @@ All notable changes to CoordKit are documented here. This project follows
   dimensions hide the line. The waypoint editor shows the counterpart position
   and copies a dimension-aware `/execute in <dimension> run tp @s ...` command.
 - **Measure tool**: press `B` to set point A, aim and press again for point B,
-  then a third press to clear. Points snap to block centres — the targeted block,
-  or the block under you when nothing is in range — and the ruler is drawn as a
-  dotted staircase through the blocks between them. It reports distance in blocks
-  (centre to centre), horizontal distance, deltas and midpoint in a top-right
-  panel. When B is set, chat offers clickable **Copy A**, **Copy B** and
-  **Copy midpoint** actions. The measurement is transient and clears on dimension
-  change or leaving the world.
+  then a third press to clear. Shows a live preview, a perspective-correct dotted
+  line, endpoint markers, straight-line distance, horizontal distance, deltas,
+  midpoint and the number of blocks between the points in a top-right panel. When
+  B is set, chat offers clickable **Copy A**, **Copy B** and **Copy midpoint**
+  actions. The measurement is transient and clears on dimension change or leaving
+  the world.
 - `showConvertedCoords` config field, default `false`, for the other-dimension
   HUD line.
 - A third **Navigation** settings tab for the conversion toggle and a short

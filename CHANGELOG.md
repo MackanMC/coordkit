@@ -6,6 +6,8 @@ All notable changes to CoordKit are documented here. This project follows
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-27
+
 ### Added
 
 - **Nether ↔ Overworld conversion**: an optional extra HUD line shows the matching
@@ -16,10 +18,10 @@ All notable changes to CoordKit are documented here. This project follows
 - **Measure tool**: press `B` to set point A, aim and press again for point B,
   then a third press to clear. Shows a live preview, a perspective-correct dotted
   line, endpoint markers, straight-line distance, horizontal distance, deltas,
-  midpoint and the number of blocks between the points in a top-right panel. When
-  B is set, chat offers clickable **Copy A**, **Copy B** and **Copy midpoint**
-  actions. The measurement is transient and clears on dimension change or leaving
-  the world.
+  midpoint and the number of blocks between the points (counting full blocks along
+  each axis) in a top-right panel. When B is set, chat offers clickable **Copy A**,
+  **Copy B** and **Copy midpoint** actions. The measurement is transient and
+  clears on dimension change or leaving the world.
 - `showConvertedCoords` config field, default `false`, for the other-dimension
   HUD line.
 - A third **Navigation** settings tab for the conversion toggle and a short

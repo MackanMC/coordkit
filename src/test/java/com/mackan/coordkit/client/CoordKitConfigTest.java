@@ -170,4 +170,36 @@ class CoordKitConfigTest {
 		assertNotNull(config);
 		assertTrue(config.waypoints.isEmpty());
 	}
+
+	@Test
+	void autoClickDelayDefaultsAndIsClamped() {
+		CoordKitConfig missing = CoordKitConfig.fromJson(JsonParser.parseString("{\"configVersion\":2}").getAsJsonObject());
+
+		assertNotNull(missing);
+		assertEquals(10, missing.autoClickDelayTicks);
+
+		CoordKitConfig low = CoordKitConfig.fromJson(
+				JsonParser.parseString("{\"configVersion\":2,\"autoClickDelayTicks\":0}").getAsJsonObject());
+		CoordKitConfig high = CoordKitConfig.fromJson(
+				JsonParser.parseString("{\"configVersion\":2,\"autoClickDelayTicks\":999}").getAsJsonObject());
+
+		assertNotNull(low);
+		assertNotNull(high);
+		assertEquals(1, low.autoClickDelayTicks);
+		assertEquals(200, high.autoClickDelayTicks);
+	}
+
+	@Test
+	void autoClickDelayIsPreserved() {
+		JsonObject json = JsonParser.parseString("{\"configVersion\":2,\"autoClickDelayTicks\":40}").getAsJsonObject();
+
+		CoordKitConfig config = CoordKitConfig.fromJson(json);
+
+		assertNotNull(config);
+		assertEquals(40, config.autoClickDelayTicks);
+
+		JsonObject saved = JsonParser.parseString(CoordKitConfig.toJson(config)).getAsJsonObject();
+
+		assertEquals(40, saved.get("autoClickDelayTicks").getAsInt());
+	}
 }

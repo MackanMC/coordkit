@@ -3,7 +3,7 @@
 	"id": "coordkit",
 	"version": "${version}",
 	"name": "CoordKit",
-	"description": "Client-side HUD with coordinates, facing, biome, time, FPS and more, plus screen-space waypoint markers, a waypoint manager, Nether/Overworld conversion and a ruler tool.",
+	"description": "Client-side HUD with coordinates, facing, biome, time, FPS and more, plus screen-space waypoint markers, a waypoint manager, Nether/Overworld conversion, a ruler tool and AFK utilities (auto-click/hold).",
 	"authors": [
 		"MackanMC"
 	],

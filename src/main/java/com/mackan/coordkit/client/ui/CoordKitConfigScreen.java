@@ -10,16 +10,18 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 /**
- * Settings with three tabs: HUD contents, waypoint display and navigation.
+ * Settings with four tabs: HUD contents, waypoint display, navigation and utility.
  */
 public final class CoordKitConfigScreen extends Screen {
 	private static final int TAB_HUD = 0;
 	private static final int TAB_WAYPOINTS = 1;
 	private static final int TAB_NAVIGATION = 2;
+	private static final int TAB_UTILITY = 3;
 	private static final int COLUMN_WIDTH = 150;
 	private static final int COLUMN_GAP = 8;
 	private static final int TAB_WIDTH = 100;
 	private static final int[] MARKER_RANGES = {64, 128, 256, 512, 1024, 2048, 4096};
+	private static final int[] AUTO_CLICK_DELAYS = {1, 2, 4, 5, 10, 15, 20, 40, 60, 100};
 
 	private final Screen parent;
 	private final int tab;
@@ -39,18 +41,21 @@ public final class CoordKitConfigScreen extends Screen {
 		super.init();
 
 		CoordKitConfig config = CoordKitConfig.get();
-		int tabWidth = Math.min(TAB_WIDTH, Math.max(40, (this.width - 8 - COLUMN_GAP * 2) / 3));
-		int tabsWidth = tabWidth * 3 + COLUMN_GAP * 2;
+		int tabWidth = Math.min(TAB_WIDTH, Math.max(40, (this.width - 8 - COLUMN_GAP * 3) / 4));
+		int tabsWidth = tabWidth * 4 + COLUMN_GAP * 3;
 		int tabX = Math.max(4, (this.width - tabsWidth) / 2);
 
 		addTab(tabX, tabWidth, "HUD", TAB_HUD);
 		addTab(tabX + tabWidth + COLUMN_GAP, tabWidth, "Waypoints", TAB_WAYPOINTS);
 		addTab(tabX + (tabWidth + COLUMN_GAP) * 2, tabWidth, "Navigation", TAB_NAVIGATION);
+		addTab(tabX + (tabWidth + COLUMN_GAP) * 3, tabWidth, "Utility", TAB_UTILITY);
 
 		if (this.tab == TAB_WAYPOINTS) {
 			initWaypointTab(config);
 		} else if (this.tab == TAB_NAVIGATION) {
 			initNavigationTab(config);
+		} else if (this.tab == TAB_UTILITY) {
+			initUtilityTab(config);
 		} else {
 			initHudTab(config);
 		}
@@ -156,6 +161,20 @@ public final class CoordKitConfigScreen extends Screen {
 				() -> config.showConvertedCoords, value -> config.showConvertedCoords = value));
 	}
 
+	private void initUtilityTab(CoordKitConfig config) {
+		int left = Math.max(4, this.width / 2 - COLUMN_WIDTH - COLUMN_GAP / 2);
+		int width = COLUMN_WIDTH * 2 + COLUMN_GAP;
+
+		addRenderableWidget(Button.builder(
+				Component.literal("Auto-click delay: " + config.autoClickDelayTicks + " ticks"),
+				button -> {
+					config.autoClickDelayTicks = nextAutoClickDelay(config.autoClickDelayTicks);
+					button.setMessage(Component.literal("Auto-click delay: " + config.autoClickDelayTicks + " ticks"));
+					config.save();
+				}
+		).bounds(left, 68, width, 20).build());
+	}
+
 	private void addTab(int x, int width, String name, int tab) {
 		Button button = Button.builder(tabLabel(name, tab), clicked -> switchTab(tab))
 				.bounds(x, 34, width, 20).build();
@@ -199,6 +218,16 @@ public final class CoordKitConfigScreen extends Screen {
 		return MARKER_RANGES[0];
 	}
 
+	private static int nextAutoClickDelay(int current) {
+		for (int delay : AUTO_CLICK_DELAYS) {
+			if (delay > current) {
+				return delay;
+			}
+		}
+
+		return AUTO_CLICK_DELAYS[0];
+	}
+
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
@@ -219,6 +248,20 @@ public final class CoordKitConfigScreen extends Screen {
 					left, y + 36, 0xFFA0A0A0, false);
 			graphics.text(this.font, "Press B a third time to clear the measurement.",
 					left, y + 48, 0xFFA0A0A0, false);
+		} else if (this.tab == TAB_UTILITY) {
+			int left = Math.max(4, this.width / 2 - COLUMN_WIDTH - COLUMN_GAP / 2);
+			int y = 98;
+
+			graphics.text(this.font, "AFK utilities (client-side). Bind keys in",
+					left, y, 0xFFA0A0A0, false);
+			graphics.text(this.font, "Options \u2192 Controls \u2192 Key Binds \u2192 CoordKit.",
+					left, y + 12, 0xFFA0A0A0, false);
+			graphics.text(this.font, "Auto-clicker: toggles repeated left clicks.",
+					left, y + 36, 0xFFA0A0A0, false);
+			graphics.text(this.font, "Hold attack/use: virtually holds mouse buttons.",
+					left, y + 48, 0xFFA0A0A0, false);
+			graphics.text(this.font, "Active states turn off when you leave the world.",
+					left, y + 72, 0xFFA0A0A0, false);
 		}
 	}
 

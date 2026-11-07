@@ -26,6 +26,9 @@ public final class CoordKitClient implements ClientModInitializer {
 	private static final KeyMapping OPEN_WAYPOINTS = register("key.coordkit.open_waypoints", InputConstants.KEY_F9);
 	private static final KeyMapping ADD_WAYPOINT = register("key.coordkit.add_waypoint", InputConstants.KEY_F10);
 	private static final KeyMapping MEASURE = register("key.coordkit.measure", InputConstants.KEY_B);
+	private static final KeyMapping TOGGLE_AUTO_CLICK = register("key.coordkit.toggle_auto_click", InputConstants.UNKNOWN.getValue());
+	private static final KeyMapping TOGGLE_HOLD_ATTACK = register("key.coordkit.toggle_hold_attack", InputConstants.UNKNOWN.getValue());
+	private static final KeyMapping TOGGLE_HOLD_USE = register("key.coordkit.toggle_hold_use", InputConstants.UNKNOWN.getValue());
 
 	private static boolean wasDead;
 	private static String lastWorldKey = "";
@@ -47,6 +50,7 @@ public final class CoordKitClient implements ClientModInitializer {
 				CoordKitHud::render
 		);
 
+		ClientTickEvents.START_CLIENT_TICK.register(AutoClicker::startTick);
 		ClientTickEvents.END_CLIENT_TICK.register(CoordKitClient::onEndTick);
 
 		CoordKit.LOGGER.info("CoordKit loaded (F6 HUD, F7 copy coords, F8 settings, F9 waypoints, F10 add waypoint, B measure)");
@@ -54,6 +58,7 @@ public final class CoordKitClient implements ClientModInitializer {
 
 	private static void onEndTick(Minecraft client) {
 		MeasureOverlay.tick(client);
+		AutoClicker.endTick(client);
 
 		while (TOGGLE_HUD.consumeClick()) {
 			CoordKitConfig config = CoordKitConfig.get();
@@ -93,6 +98,18 @@ public final class CoordKitClient implements ClientModInitializer {
 
 		while (MEASURE.consumeClick()) {
 			MeasureOverlay.press(client);
+		}
+
+		while (TOGGLE_AUTO_CLICK.consumeClick()) {
+			AutoClicker.toggleAutoClick(client);
+		}
+
+		while (TOGGLE_HOLD_ATTACK.consumeClick()) {
+			AutoClicker.toggleHoldAttack(client);
+		}
+
+		while (TOGGLE_HOLD_USE.consumeClick()) {
+			AutoClicker.toggleHoldUse(client);
 		}
 
 		handleDeath(client);

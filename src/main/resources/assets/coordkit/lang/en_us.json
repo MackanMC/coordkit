@@ -5,5 +5,8 @@
 	"key.coordkit.open_settings": "Open settings",
 	"key.coordkit.open_waypoints": "Open waypoint manager",
 	"key.coordkit.add_waypoint": "Add waypoint here",
-	"key.coordkit.measure": "Measure point (A → B → clear)"
+	"key.coordkit.measure": "Measure point (A → B → clear)",
+	"key.coordkit.toggle_auto_click": "Toggle auto-clicker (attack)",
+	"key.coordkit.toggle_hold_attack": "Toggle hold attack",
+	"key.coordkit.toggle_hold_use": "Toggle hold use"
 }

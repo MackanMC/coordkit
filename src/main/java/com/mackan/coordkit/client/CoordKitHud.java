@@ -45,6 +45,7 @@ public final class CoordKitHud {
 
 		// The ruler is transient and stays visible with the info panel disabled.
 		MeasureOverlay.render(graphics, client);
+		AutoClicker.render(graphics, client);
 
 		if (!config.showHud) {
 			return;

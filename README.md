@@ -3,8 +3,9 @@
 A tiny client-side Fabric mod for **Minecraft 26.2** ("Chaos Cubed").
 
 It adds a compact info panel to the HUD, on-screen waypoint markers, saved waypoints,
-a waypoint manager, a Nether/Overworld coordinate converter, a ruler tool, and a
-settings screen — all without touching the server.
+a waypoint manager, a Nether/Overworld coordinate converter, a ruler tool, AFK
+utilities (auto-click and hold), and a settings screen — all without touching the
+server.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 
@@ -60,6 +61,21 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - Configurable marker range (64 m to 4096 m) and an optional edge-arrow toggle.
 - Markers can be enabled independently of the info panel.
 
+### AFK utilities
+- **Auto-clicker**: toggles repeated left-click attacks at a configurable delay for
+  AFK use cases (for example, mob farms). Bind the toggle key in *Options →
+  Controls → Key Binds → CoordKit* (unbound by default).
+- **Hold attack / Hold use**: virtually holds the attack or use mouse button, useful
+  when you need to hold one or both buttons (for example, concrete makers). Bind
+  the keys in Controls; the two holds work independently.
+- Set the auto-click delay in **F8 → Utility** (1–200 ticks, default 10). 20 ticks
+  is one second.
+- A small on-screen status indicator appears while any utility is active, even when
+  the main HUD panel is disabled.
+- Utility states are transient: they are never saved to config and turn off
+  automatically when you leave the world or close the game. Use them only where
+  AFK automation is allowed.
+
 ### Waypoints
 - **F9** opens the waypoint manager.
 - **F10** adds a waypoint at your current position immediately.
@@ -105,7 +121,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 
 ### Screens
-- **F8** opens the settings screen, which has three tabs:
+- **F8** opens the settings screen, which has four tabs:
   - **HUD**: panel on/off, coordinates, FPS, clock, chunk line, dimension,
     facing, biome, time, sky light, block light, speed, durability, waypoint
     list, markers and edge arrows.
@@ -113,6 +129,8 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
     toggles, and a shortcut to the manager.
   - **Navigation**: the other-dimension coordinate toggle and a reminder of how
     the measure tool works.
+  - **Utility**: auto-click delay and reminders for the AFK utilities (bind the
+    toggle keys in *Controls*).
 - The waypoint manager also opens the export, import and group screens.
 - With [Mod Menu](https://modrinth.com/mod/modmenu) installed, the same screen is
   available from CoordKit's entry in the mod list.
@@ -128,9 +146,12 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 | `F9` | Open waypoint manager |
 | `F10` | Add a waypoint at your position |
 | `B` | Measure point A → B → clear |
+| *(unbound)* | Toggle auto-clicker (attack) |
+| *(unbound)* | Toggle hold attack |
+| *(unbound)* | Toggle hold use |
 
-All six keybinds can be changed in *Options → Controls → Key Binds*
-(category: CoordKit).
+All keybinds can be changed in *Options → Controls → Key Binds*
+(category: CoordKit). The AFK utility toggles are unbound by default.
 
 ## Config file
 
@@ -160,6 +181,7 @@ All six keybinds can be changed in *Options → Controls → Key Binds*
   "markerMaxDistance": 512,
   "scopeNewWaypointsToWorld": true,
   "createDeathWaypoint": true,
+  "autoClickDelayTicks": 10,
   "waypoints": [
     {
       "name": "Base",
@@ -221,7 +243,7 @@ $env:JAVA_HOME = 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot'
 .\gradlew.bat build
 ```
 
-The mod jar ends up in `build/libs/coordkit-1.6.0.jar`.
+The mod jar ends up in `build/libs/coordkit-1.7.0.jar`.
 
 ## Run in a dev client
 

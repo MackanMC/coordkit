@@ -52,6 +52,12 @@ public final class CoordKitConfig {
 	public boolean scopeNewWaypointsToWorld = true;
 	public boolean createDeathWaypoint = true;
 
+	/**
+	 * Delay between auto-click attacks, in ticks (20 ticks = 1 second).
+	 * Transient auto-click/hold state is not stored here.
+	 */
+	public int autoClickDelayTicks = 10;
+
 	public List<Waypoint> waypoints = new ArrayList<>();
 
 	public static CoordKitConfig get() {
@@ -111,6 +117,10 @@ public final class CoordKitConfig {
 			loaded.createDeathWaypoint = true;
 		}
 
+		if (!json.has("autoClickDelayTicks")) {
+			loaded.autoClickDelayTicks = 10;
+		}
+
 		// HUD toggles added after 1.4.0 default to visible, except the two light
 		// layers, which replace the old combined light switch.
 		if (!json.has("showCoordinates")) {
@@ -144,6 +154,7 @@ public final class CoordKitConfig {
 
 		loaded.maxWaypoints = Math.max(1, Math.min(10, loaded.maxWaypoints));
 		loaded.markerMaxDistance = Math.max(32, Math.min(4096, loaded.markerMaxDistance));
+		loaded.autoClickDelayTicks = Math.max(1, Math.min(200, loaded.autoClickDelayTicks));
 		return loaded;
 	}
 

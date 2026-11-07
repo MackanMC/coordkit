@@ -6,6 +6,29 @@ All notable changes to CoordKit are documented here. This project follows
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-08
+
+### Added
+
+- **Auto-clicker** (utility): toggle repeated left-click attacks at a configurable
+  delay (in ticks) for AFK use cases such as mob farms. The keybind is unbound by
+  default; bind it in *Options → Controls → Key Binds → CoordKit*.
+- **Hold attack / Hold use** toggles: virtually hold the attack or use mouse
+  button (e.g. for concrete makers where both buttons must be held). Keybinds are
+  unbound by default and the two holds can be active independently.
+- `autoClickDelayTicks` config field (default `10`, clamped to 1–200 ticks) for
+  the auto-clicker interval.
+- A fourth **Utility** settings tab with the auto-click delay control and usage
+  notes. The tab strip now shows **HUD**, **Waypoints**, **Navigation** and
+  **Utility**.
+- A small on-screen status indicator when auto-click or hold utilities are active,
+  visible even when the main HUD panel is disabled.
+
+### Changed
+
+- Auto-click and hold states are transient: they are never saved to config and
+  turn off automatically when you leave the world or close the game.
+
 ## [1.6.0] - 2026-10-27
 
 ### Added
@@ -161,7 +184,9 @@ All notable changes to CoordKit are documented here. This project follows
 
 - Markers no longer drift or sit on an offset when the camera moves.
 
-[Unreleased]: https://github.com/MackanMC/coordkit/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/MackanMC/coordkit/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.7.0
+[1.6.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.6.0
 [1.5.1]: https://github.com/MackanMC/coordkit/releases/tag/v1.5.1
 [1.5.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.5.0
 [1.4.0]: https://github.com/MackanMC/coordkit/releases/tag/v1.4.0
